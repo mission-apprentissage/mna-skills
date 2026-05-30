@@ -1,0 +1,117 @@
+{
+  "skill_name": "lba-issue",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "je veux créer une issue pour un bug",
+      "expected_output": "L'agent pose des questions une par une en mode interactif pour construire un issue Bug structuré : type, titre, contexte métier, description du bug, critères d'acceptation, zone technique, priorité. Ne pose pas toutes les questions d'un coup.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "asks_one_question_at_a_time",
+          "text": "Le skill pose les questions une par une, pas toutes d'un coup"
+        },
+        {
+          "id": "uses_correct_format",
+          "text": "L'issue produite contient les sections : Contexte, Problème/Besoin, Critères d'acceptation, Contexte technique, Définition of Done"
+        },
+        {
+          "id": "technical_enrichment",
+          "text": "Le skill enrichit le contexte technique même si l'utilisateur dit 'je ne sais pas' pour les fichiers"
+        },
+        {
+          "id": "french_output",
+          "text": "L'issue produite est entièrement en français"
+        },
+        {
+          "id": "copilot_ready",
+          "text": "Les critères d'acceptation sont vérifiables individuellement (format checkbox)"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "les candidats me remontent qu'ils ne reçoivent pas leurs emails de confirmation d'inscription sur LBA. C'est un problème récurrent depuis la semaine dernière.",
+      "expected_output": "L'agent détecte un bug, enrichit avec contexte technique (server/services email, Brevo), pose les questions manquantes (critères d'acceptation, priorité), et produit un issue complet avec structure standard et Définition of Done.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "detects_improvement_mode",
+          "text": "Le skill identifie qu'il y a assez d'info pour mode amélioration (ne repart pas de zéro)"
+        },
+        {
+          "id": "mentions_brevo",
+          "text": "Le contexte technique mentionne Brevo (provider email utilisé par LBA) ou le service d'envoi d'emails"
+        },
+        {
+          "id": "uses_correct_format",
+          "text": "L'issue produite contient les sections : Contexte, Problème/Besoin, Critères d'acceptation, Contexte technique, Définition of Done"
+        },
+        {
+          "id": "p1_priority",
+          "text": "La priorité P1 bloquant est correctement reflétée dans l'issue"
+        },
+        {
+          "id": "french_output",
+          "text": "L'issue produite est entièrement en français"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "il faudrait ajouter un tableau de bord pour que les employeurs puissent voir le nombre de candidatures reçues par offre, et le taux de réponse",
+      "expected_output": "L'agent identifie une Feature, complète avec contexte technique UI (espace-pro, Next.js, composants), structure l'issue avec critères d'acceptation précis et scope limité. Si trop large, propose de découper.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "uses_correct_format",
+          "text": "L'issue produite contient les sections : Contexte, Problème/Besoin, Critères d'acceptation, Contexte technique, Définition of Done"
+        },
+        {
+          "id": "finds_real_files",
+          "text": "Le contexte technique mentionne des fichiers réels de la codebase (pas génériques)"
+        },
+        {
+          "id": "scope_warning",
+          "text": "Si le scope est trop large pour Copilot, le skill le signale et propose de découper"
+        },
+        {
+          "id": "french_output",
+          "text": "L'issue produite est entièrement en français"
+        },
+        {
+          "id": "copilot_ready",
+          "text": "Les critères d'acceptation sont vérifiables individuellement (format checkbox)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "voici mon brouillon d'issue :\n\nTitre : Améliorer la page de recherche\nIl faut améliorer la page de recherche des formations pour qu'elle soit plus rapide et plus claire. Les utilisateurs se plaignent que c'est lent.",
+      "expected_output": "Mode amélioration : l'agent identifie ce qui manque (critères précis, contexte technique, reproduction du problème de perf, priorité), restructure selon le format standard, et propose le résultat enrichi.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "detects_improvement_mode",
+          "text": "Le skill identifie que c'est un brouillon et applique le mode amélioration"
+        },
+        {
+          "id": "identifies_missing_parts",
+          "text": "Le skill identifie explicitement ce qui manque dans le brouillon (critères, contexte technique, priorité)"
+        },
+        {
+          "id": "uses_correct_format",
+          "text": "L'issue produite contient les sections : Contexte, Problème/Besoin, Critères d'acceptation, Contexte technique, Définition of Done"
+        },
+        {
+          "id": "finds_real_files",
+          "text": "Le contexte technique mentionne des fichiers réels de la codebase"
+        },
+        {
+          "id": "french_output",
+          "text": "L'issue produite est entièrement en français"
+        }
+      ]
+    }
+  ]
+}
