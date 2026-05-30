@@ -31,7 +31,13 @@ L'audience est large : dev, PO, data, bizdev, growth. Tout le monde doit pouvoir
 6. **Zone technique** : UI / Serveur / Shared / je ne sais pas
 7. **Fichiers ou routes concernés** (optionnel) : passer si l'utilisateur ne sait pas
 8. **Équipe** : Developer / Growth / UX/UI / Data / PO/PM / DevOps (optionnel — passer si incertain)
-9. **Assignee** (optionnel) : si l'utilisateur veut assigner, appeler `list_members` pour proposer la liste, sinon passer
+9. **Assignee** (optionnel) :
+   - Vérifier en mémoire si le login GitHub de l'utilisateur est connu (chercher un fichier `user_github_login.md` dans le répertoire mémoire du projet)
+   - Si connu → proposer ce login comme valeur par défaut, ou demander si l'utilisateur veut assigner quelqu'un d'autre
+   - Si inconnu → appeler `list_members`, présenter la liste complète, demander "quel est ton login GitHub ?", sauvegarder la réponse en mémoire (type `user`, fichier `user_github_login.md`)
+   - Si l'utilisateur demande d'assigner quelqu'un par son prénom ou une description vague → appeler `list_members` pour corréler et trouver le bon login
+   - Il n'existe pas de `whoami` côté GitHub MCP — la liste est le seul moyen d'identifier l'utilisateur courant
+   - **Ne jamais inférer l'assignee depuis une mention dans le titre ou la description** — n'assigner que si l'utilisateur le demande explicitement
 10. **Priorité** : P1 Urgent / P2 High / P3 Medium / P4 Low
 
 ---
@@ -129,11 +135,13 @@ Appeler `set_project_field` avec :
 - `field` : `"priority"`
 - `value` : `"Urgent"` | `"High"` | `"Medium"` | `"Low"` (correspondance : P1=Urgent, P2=High, P3=Medium, P4=Low)
 
-**Étape 3 — Définir l'équipe** (si l'utilisateur en a renseigné une)
+**Étape 3 — Définir l'équipe** (si l'utilisateur en a renseigné une explicitement)
 Appeler `set_project_field` avec :
 - `item_id` : le project item ID de l'étape 1
 - `field` : `"team"`
 - `value` : la valeur correspondante (Developer / Growth / UX/UI / Data / PO/PM / DevOps)
+
+> **Ne jamais déduire la team depuis l'appartenance d'une personne mentionnée ou assignée** — ne renseigner ce champ que si l'utilisateur l'a choisi explicitement à l'étape 8.
 
 Afficher l'URL de l'issue et confirmer que la priorité et l'équipe ont été assignées dans le projet.
 
