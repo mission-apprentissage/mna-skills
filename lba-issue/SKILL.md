@@ -31,14 +31,10 @@ L'audience est large : dev, PO, data, bizdev, growth. Tout le monde doit pouvoir
 6. **Zone technique** : UI / Serveur / Shared / je ne sais pas
 7. **Fichiers ou routes concernés** (optionnel) : passer si l'utilisateur ne sait pas
 8. **Équipe** : Developer / Growth / UX/UI / Data / PO/PM / DevOps (optionnel — passer si incertain)
-9. **Assignee** (optionnel) :
-   - Vérifier en mémoire si le login GitHub de l'utilisateur est connu (chercher un fichier `user_github_login.md` dans le répertoire mémoire du projet)
-   - Si connu → proposer ce login comme valeur par défaut, ou demander si l'utilisateur veut assigner quelqu'un d'autre
-   - Si inconnu → appeler `list_members`, présenter la liste complète, demander "quel est ton login GitHub ?", sauvegarder la réponse en mémoire (type `user`, fichier `user_github_login.md`)
-   - Si l'utilisateur demande d'assigner quelqu'un par son prénom ou une description vague → appeler `list_members` pour corréler et trouver le bon login
-   - Il n'existe pas de `whoami` côté GitHub MCP — la liste est le seul moyen d'identifier l'utilisateur courant
-   - **Ne jamais inférer l'assignee depuis une mention dans le titre ou la description** — n'assigner que si l'utilisateur le demande explicitement
-10. **Priorité** : P1 Urgent / P2 High / P3 Medium / P4 Low
+9. **Assignee** (optionnel) : si l'utilisateur veut assigner, appeler `list_members` pour proposer la liste, sinon passer
+10. **Priorité** : P1 bloquant / P2 important / P3 normal / P4 faible
+11. **Issue parente** (optionnel) : cette issue est-elle une sous-issue d'un ticket existant ? Si oui, demander le numéro (`#123`)
+12. **Bloquée par** (optionnel) : cette issue est-elle bloquée par d'autres tickets ? Si oui, demander les numéros (ex. `#45, #67`)
 
 ---
 
@@ -80,11 +76,11 @@ Feature/Task : ce qu'on veut faire et pourquoi.]
 Si l'utilisateur ne connaît pas les fichiers ou la zone technique, appuie-toi sur cette structure :
 
 **Stack :**
-- UI : Next.js 15 App Router, MUI + DSFR (design system gouvernemental français), icônes Remixicons
+- UI : Next.js 15 App Router, Chakra UI + DSFR (design system gouvernemental français)
 - Server : Fastify + TypeScript strict, MongoDB
 - Shared : Zod schemas et types partagés entre UI et server
 - Tests : Vitest (unit + integration avec MongoDB réel)
-- CI : typecheck + lint + tests (pas de build en CI)
+- CI : typecheck + lint + prettier + tests (pas de build en CI)
 
 **Structure :**
 - `ui/app/` — pages Next.js App Router (routes)
@@ -124,25 +120,20 @@ Une fois l'issue construite et validée par l'utilisateur :
 Appeler `create_issue` avec :
 - `title` : le titre de l'issue
 - `description` : le body complet au format markdown (sections Contexte, Problème, Critères, etc.)
-- `type` : `"Bug"` | `"Feature"` | `"Task"` selon le type choisi à l'étape 1
 - `assignees` : tableau avec le login GitHub si un assignee a été choisi, sinon omettre
+- `parent_issue_number` : numéro de l'issue parente si renseigné (number, pas string)
+- `blocked_by` : tableau des numéros d'issues bloquantes si renseignés (number[], pas string[])
 
 → Récupérer le `project item ID` retourné dans la réponse.
+→ Si `parent_issue_url` est présent dans la réponse, l'afficher.
+→ Si `blocked_by` est présent dans la réponse, confirmer les liaisons établies.
 
-**Étape 2 — Définir la priorité**
-Appeler `set_project_field` avec :
-- `item_id` : le project item ID de l'étape 1
-- `field` : `"priority"`
-- `value` : `"Urgent"` | `"High"` | `"Medium"` | `"Low"` (correspondance : P1=Urgent, P2=High, P3=Medium, P4=Low)
-
-**Étape 3 — Définir l'équipe** (si l'utilisateur en a renseigné une explicitement)
+**Étape 2 — Définir l'équipe** (si l'utilisateur en a renseigné une)
 Appeler `set_project_field` avec :
 - `item_id` : le project item ID de l'étape 1
 - `field` : `"team"`
 - `value` : la valeur correspondante (Developer / Growth / UX/UI / Data / PO/PM / DevOps)
 
-> **Ne jamais déduire la team depuis l'appartenance d'une personne mentionnée ou assignée** — ne renseigner ce champ que si l'utilisateur l'a choisi explicitement à l'étape 8.
-
-Afficher l'URL de l'issue et confirmer que la priorité et l'équipe ont été assignées dans le projet.
+Afficher l'URL de l'issue et un récapitulatif des liaisons établies (parent, bloquants).
 
 > **Si le MCP n'est pas disponible** (outil `create_issue` absent) : le connecteur `lba-github` n'est pas activé pour cet utilisateur. Copier le markdown généré et créer l'issue manuellement sur GitHub.
