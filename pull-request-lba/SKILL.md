@@ -25,6 +25,14 @@ et mettre à jour le statut de l'issue liée dans le GitHub Project "La bonne al
   - `pret-a-tester` → `61e4505c`
   - `terminer` → `98236657`
 
+## Étape 0 — Résoudre l'assignee
+
+Vérifier en mémoire si le login GitHub de l'utilisateur est connu (fichier `user_github_login.md` dans le répertoire mémoire du projet) :
+- **Connu** → utiliser ce login comme `<ASSIGNEE>` pour toute la session, sans poser de question
+- **Inconnu** → appeler `list_members`, présenter la liste, demander "quel est ton login GitHub ?", sauvegarder la réponse en mémoire (type `user`, fichier `user_github_login.md`), puis utiliser ce login comme `<ASSIGNEE>`
+
+---
+
 ## Étape 1 — Collecter les informations
 
 Les arguments peuvent être passés directement après la commande :
@@ -121,7 +129,7 @@ Créer l'issue, l'ajouter au projet en `en-cours` :
 ISSUE_URL=$(gh issue create \
   --title "<titre>" \
   --body "<description>" \
-  --assignee kevbarns)
+  --assignee <ASSIGNEE>)
 
 NUMERO=$(echo "$ISSUE_URL" | grep -oP '\d+$')
 
@@ -203,7 +211,7 @@ Avec issue :
 ```bash
 gh pr create \
   --title "<type>: <description>" \
-  --assignee kevbarns \
+  --assignee <ASSIGNEE> \
   --body "$(cat <<'EOF'
 Closes #<NUMERO>
 
@@ -222,7 +230,7 @@ Sans issue :
 ```bash
 gh pr create \
   --title "<type>: <description>" \
-  --assignee kevbarns \
+  --assignee <ASSIGNEE> \
   --body "$(cat <<'EOF'
 ## Changements
 
@@ -243,7 +251,7 @@ la gestion du statut (deux items indépendants au lieu d'un).
 
 ## Notes
 
-- Compte GitHub : `kevbarns` — commits et PR au nom de Kevin uniquement
+- Le login GitHub de l'utilisateur est résolu en mémoire à l'étape 0 (`user_github_login.md`)
 - Branches nommées `<type>/issue-<NUMERO>` (minuscules)
 - Ne jamais force-push sur `main`
 - Si CI échoue après la PR, investiguer — ne pas ignorer
