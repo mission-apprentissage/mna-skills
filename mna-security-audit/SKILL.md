@@ -11,13 +11,23 @@ Audit mensuel de sécurité sur les 3 repos GitHub de Mission Nationale Apprenti
 
 | GitHub | Chemin local | Package manager |
 |--------|-------------|-----------------|
-| `mission-apprentissage/labonnealternance` | `/Users/kevin/Documents/projets/beta/labonnealternance` | Yarn Berry |
-| `mission-apprentissage/bal` | `/Users/kevin/Documents/projets/beta/bal` | **pnpm** |
-| `mission-apprentissage/api-apprentissage` | `/Users/kevin/Documents/projets/beta/api-apprentissage` | Yarn Berry |
+| `mission-apprentissage/labonnealternance` | `/Users/kevin-macmini/Documents/_project/beta/labonnealternance` | Yarn Berry |
+| `mission-apprentissage/bal` | `/Users/kevin-macmini/Documents/_project/beta/bal` | **pnpm** |
+| `mission-apprentissage/api-apprentissage` | `/Users/kevin-macmini/Documents/_project/beta/api-apprentissage` | Yarn Berry |
 
-## Entrée
+## Entrée — Issue de suivi
 
-Le numéro du ticket JIRA (ex: `3717`). Utiliser ce numéro pour nommer les branches et lier les PRs.
+L'audit doit être lié à une issue GitHub dans le projet LBA.
+
+**Si l'utilisateur fournit un numéro d'issue** (ex: `#142`) → l'utiliser directement pour nommer les branches et lier les PRs.
+
+**Si l'utilisateur n'en a pas** → invoquer le skill `/lba-issue` pour en créer une :
+- Type : `Task`
+- Titre suggéré : `Audit sécurité mensuel — <mois année>`
+- Contexte : audit mensuel des CVE critiques sur les repos MNA
+- Critère d'acceptation : toutes les alertes critiques corrigées ou dismissées avec commentaire
+
+Récupérer le numéro de l'issue créée (ex: `#142`) et l'utiliser pour la suite.
 
 ---
 
@@ -61,7 +71,7 @@ Voir `references/dependency-analysis.md` pour la stratégie de correction selon 
 
 ## Étape 3 — Préparer l'environnement local pour chaque repo affecté
 
-Les clones locaux sont dans `/Users/kevin/Documents/projets/beta/`. Si un repo n'est pas présent à cet emplacement, le cloner dans `/tmp/` :
+Les clones locaux sont dans `/Users/kevin-macmini/Documents/_project/beta/`. Si un repo n'est pas présent à cet emplacement, le cloner dans `/tmp/` :
 
 ```bash
 git clone git@github.com:mission-apprentissage/<REPO>.git /tmp/mna-audit-<REPO>
@@ -80,7 +90,7 @@ Voir `references/package-managers.md` pour les commandes et syntaxes d'override 
 
 ```bash
 git fetch origin main
-git checkout -b fix/lba-<JIRA> origin/main
+git checkout -b fix/security-audit-<ISSUE> origin/main
 ```
 
 ### Stratégie de correction (voir aussi references/dependency-analysis.md)
@@ -129,12 +139,12 @@ pnpm why <package>   # pnpm
 
 ```bash
 git add package.json <workspace>/package.json yarn.lock  # ou les fichiers modifiés
-git commit -m "fix(lba-<JIRA>): corriger <N> CVE critiques (<liste des packages>)"
-git push -u origin fix/lba-<JIRA>
+git commit -m "fix(security-audit-<ISSUE>): corriger <N> CVE critiques (<liste des packages>)"
+git push -u origin fix/security-audit-<ISSUE>
 ```
 
 **Règles de commit impératives :**
-- Format conventional commit : `fix(lba-<JIRA>): <description en minuscules>`
+- Format conventional commit : `fix(security-audit-<ISSUE>): <description en minuscules>`
 - Ne jamais ajouter de référence à Claude, co-authored-by ou mention d'IA
 - Ne jamais utiliser `--no-verify`
 - Si un hook échoue, diagnostiquer et corriger avant de recréer le commit
@@ -149,12 +159,10 @@ git push -u origin fix/lba-<JIRA>
 
 ```bash
 gh pr create \
-  --title "fix(lba-<JIRA>): corriger <N> CVE critiques (<packages>)" \
-  --assignee kevbarns \
+  --title "fix(security-audit-<ISSUE>): corriger <N> CVE critiques (<packages>)" \
   --label "dependencies" \   # api-apprentissage uniquement
-
   --body "$(cat <<'EOF'
-https://tableaudebord-apprentissage.atlassian.net/browse/LBA-<JIRA>
+Fixes #<ISSUE>
 
 ---
 
@@ -188,13 +196,13 @@ Pour les alertes **corrigées dans la PR** :
 gh api -X PATCH "repos/mission-apprentissage/<REPO>/code-scanning/alerts/<N>" \
   --field state="dismissed" \
   --field dismissed_reason="won't fix" \
-  --field dismissed_comment="Corrigé dans la PR #<PR> (fix/lba-<JIRA>) : <package> mis à jour vers <version>. L'alerte se fermera automatiquement à la prochaine release."
+  --field dismissed_comment="Corrigé dans la PR #<PR> (fix/security-audit-<ISSUE>) : <package> mis à jour vers <version>. L'alerte se fermera automatiquement à la prochaine release."
 
 # Dependabot
 gh api -X PATCH "repos/mission-apprentissage/<REPO>/dependabot/alerts/<N>" \
   --field state="dismissed" \
   --field dismissed_reason="fix_started" \
-  --field dismissed_comment="Corrigé dans la PR #<PR> (fix/lba-<JIRA>) : <package> mis à jour vers <version>. L'alerte se fermera automatiquement au merge."
+  --field dismissed_comment="Corrigé dans la PR #<PR> (fix/security-audit-<ISSUE>) : <package> mis à jour vers <version>. L'alerte se fermera automatiquement au merge."
 ```
 
 Pour les alertes **non corrigibles** (ex: binaire build-tool embarqué, pas de version patchée disponible) :
@@ -213,16 +221,16 @@ gh api -X PATCH "repos/mission-apprentissage/<REPO>/code-scanning/alerts/<N>" \
 Présenter un récapitulatif :
 
 ```
-## Audit sécurité LBA-<JIRA> — <date>
+## Audit sécurité #<ISSUE> — <date>
 
 ### mission-apprentissage/labonnealternance
-- PR #XXXX créée : fix/lba-<JIRA>
+- PR #XXXX créée : fix/security-audit-<ISSUE>
 - ✅ handlebars 4.7.8 → 4.7.9 (résolution transitive)
 - ✅ fast-xml-parser 5.2.5 → 5.5.9 (résolution transitive)
 - ⚠️  esbuild/Go stdlib : dismissé (build-tool uniquement)
 
 ### mission-apprentissage/bal
-- PR #XXXX créée : fix/lba-<JIRA>
+- PR #XXXX créée : fix/security-audit-<ISSUE>
 - ✅ lodash 4.17.20 → 4.17.21 (dépendance directe)
 
 ### mission-apprentissage/api-apprentissage
@@ -233,9 +241,8 @@ Présenter un récapitulatif :
 
 ## Notes importantes
 
-- **GitHub login** : `kevbarns` — toujours assigner les PRs à ce compte
 - **Ne jamais force-push** sur `main`
-- Les clones locaux sont dans `/Users/kevin/Documents/projets/beta/` — si absent, cloner dans `/tmp/mna-audit-<REPO>/`
+- Les clones locaux sont dans `/Users/kevin-macmini/Documents/_project/beta/` — si absent, cloner dans `/tmp/mna-audit-<REPO>/`
 - **bal utilise pnpm** : `pnpm install`, `pnpm why`, `pnpm.overrides` dans package.json — ne pas utiliser yarn sur ce repo
 - Si `yarn install` ou `pnpm install` échoue après modification des overrides, vérifier la compatibilité de version avec le package parent avant de forcer
 - Les alertes Docker Scout (code scanning) ne disparaissent qu'après une release qui rebuild l'image — préciser cela dans les commentaires de dismissal
