@@ -17,6 +17,8 @@ L'audience est large : dev, PO, data, bizdev, growth. Tout le monde doit pouvoir
 
 **Mode interactif** — l'utilisateur part de zéro ou n'a qu'une idée vague → poser les questions une par une dans l'ordre ci-dessous. Ne pas les poser toutes d'un coup.
 
+**Mode découpe** — l'utilisateur décrit un besoin large à décomposer, ou demande explicitement de créer des sous-issues → voir section dédiée ci-dessous.
+
 ---
 
 ## Questions à poser en mode interactif (dans l'ordre)
@@ -105,6 +107,43 @@ Une issue que Copilot peut exécuter seul a :
 - Les **exigences de test explicites**
 
 Si l'issue est trop large pour Copilot, signale-le et propose de la découper en sous-issues.
+
+---
+
+## Mode découpe — parent + sous-issues en une session
+
+Déclencher quand l'utilisateur :
+- décrit un besoin large qu'il veut décomposer en sous-issues
+- demande explicitement "crée-moi des sous-issues pour X"
+- mentionne un ticket parent qui n'existe pas encore
+
+### Étape 1 — Proposer la décomposition
+
+Analyser le besoin et proposer :
+- une **issue parente** (titre + contexte haut niveau, sans critères d'acceptation détaillés — c'est un ticket chapeau)
+- N **sous-issues** avec chacune un scope étroit et des critères d'acceptation vérifiables
+
+Présenter le plan complet et demander validation avant toute création.
+
+### Étape 2 — Créer le parent en premier
+
+Appeler `create_issue` pour l'issue parente → récupérer son **numéro** dans la réponse (ex. `#142`).
+
+### Étape 3 — Créer les sous-issues en séquence
+
+Pour chaque sous-issue, appeler `create_issue` avec `parent_issue_number` = numéro récupéré à l'étape 2.
+
+Ne pas paralléliser : créer les sous-issues une par une pour garder la lisibilité des retours et détecter une éventuelle erreur.
+
+### Étape 4 — Récapitulatif
+
+Afficher un tableau récapitulatif :
+
+| Issue | URL | Lien parent |
+|---|---|---|
+| Parente | url | — |
+| Sous-issue 1 | url | ✅ #142 |
+| Sous-issue 2 | url | ✅ #142 |
 
 ---
 
