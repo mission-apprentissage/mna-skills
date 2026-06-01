@@ -9,11 +9,16 @@ Audit mensuel de sécurité sur les 3 repos GitHub de Mission Nationale Apprenti
 
 ## Repos cibles
 
-| GitHub | Chemin local | Package manager |
-|--------|-------------|-----------------|
-| `mission-apprentissage/labonnealternance` | `/Users/kevin-macmini/Documents/_project/beta/labonnealternance` | Yarn Berry |
-| `mission-apprentissage/bal` | `/Users/kevin-macmini/Documents/_project/beta/bal` | **pnpm** |
-| `mission-apprentissage/api-apprentissage` | `/Users/kevin-macmini/Documents/_project/beta/api-apprentissage` | Yarn Berry |
+| GitHub | Package manager |
+|--------|-----------------|
+| `mission-apprentissage/labonnealternance` | Yarn Berry |
+| `mission-apprentissage/bal` | **pnpm** |
+| `mission-apprentissage/api-apprentissage` | Yarn Berry |
+
+**Dossier parent des clones locaux** : demander à l'utilisateur au démarrage :
+> "Dans quel dossier se trouvent tes clones locaux des repos MNA ? (ex: `~/Documents/projets/beta`)"
+
+Utiliser ce chemin comme `<BASE_DIR>` pour toute la session. Si un repo est absent à cet emplacement, le cloner dans `/tmp/mna-audit-<REPO>`.
 
 ## Entrée — Issue de suivi
 
@@ -71,10 +76,17 @@ Voir `references/dependency-analysis.md` pour la stratégie de correction selon 
 
 ## Étape 3 — Préparer l'environnement local pour chaque repo affecté
 
-Les clones locaux sont dans `/Users/kevin-macmini/Documents/_project/beta/`. Si un repo n'est pas présent à cet emplacement, le cloner dans `/tmp/` :
+Pour chaque repo affecté, vérifier la présence dans `<BASE_DIR>/<REPO>`. Si absent, cloner dans `/tmp/` :
 
 ```bash
 git clone git@github.com:mission-apprentissage/<REPO>.git /tmp/mna-audit-<REPO>
+```
+
+**Mettre à jour la branche principale avant de créer la branche de fix** :
+
+```bash
+git checkout main
+git pull origin main
 ```
 
 **Package managers par repo (déjà connus) :**
@@ -89,7 +101,6 @@ Voir `references/package-managers.md` pour les commandes et syntaxes d'override 
 ## Étape 4 — Créer la branche et appliquer les corrections
 
 ```bash
-git fetch origin main
 git checkout -b fix/security-audit-<ISSUE> origin/main
 ```
 
@@ -242,7 +253,7 @@ Présenter un récapitulatif :
 ## Notes importantes
 
 - **Ne jamais force-push** sur `main`
-- Les clones locaux sont dans `/Users/kevin-macmini/Documents/_project/beta/` — si absent, cloner dans `/tmp/mna-audit-<REPO>/`
+- Le dossier des clones est demandé à l'utilisateur au démarrage (`<BASE_DIR>`) — si un repo est absent, cloner dans `/tmp/mna-audit-<REPO>/`
 - **bal utilise pnpm** : `pnpm install`, `pnpm why`, `pnpm.overrides` dans package.json — ne pas utiliser yarn sur ce repo
 - Si `yarn install` ou `pnpm install` échoue après modification des overrides, vérifier la compatibilité de version avec le package parent avant de forcer
 - Les alertes Docker Scout (code scanning) ne disparaissent qu'après une release qui rebuild l'image — préciser cela dans les commentaires de dismissal
