@@ -163,16 +163,59 @@ Appeler `create_issue` avec :
 - `parent_issue_number` : numéro de l'issue parente si renseigné (number, pas string)
 - `blocked_by` : tableau des numéros d'issues bloquantes si renseignés (number[], pas string[])
 
-→ Récupérer le `project item ID` retourné dans la réponse.
+→ Récupérer dans la réponse le **project item ID** _(status, team, epic, approver, sprint)_ et l'**issue node ID** _(priority, type)_ — les deux sont distincts et clairement étiquetés.
 → Si `parent_issue_url` est présent dans la réponse, l'afficher.
 → Si `blocked_by` est présent dans la réponse, confirmer les liaisons établies.
 
-**Étape 2 — Définir l'équipe** (si l'utilisateur en a renseigné une)
-Appeler `set_project_field` avec :
-- `item_id` : le project item ID de l'étape 1
+**Étapes 2 & 3 — Définir le type et la priorité** (toujours, en parallèle)
+
+Les deux utilisent l'**issue node ID** :
+
+`set_project_field` — type :
+- `id` : l'issue node ID de l'étape 1
+- `field` : `"type"`
+- `value` : `"Bug"` | `"Feature"` | `"Task"` selon le type choisi
+
+`set_project_field` — priority :
+- `id` : l'issue node ID de l'étape 1
+- `field` : `"priority"`
+- `value` : `"Urgent"` | `"High"` | `"Medium"` | `"Low"` (P1=Urgent, P2=High, P3=Medium, P4=Low)
+
+**Étape 4 — Définir l'équipe** (si l'utilisateur en a renseigné une)
+
+Utilise le **project item ID** :
+
+`set_project_field` — team :
+- `id` : le project item ID de l'étape 1
 - `field` : `"team"`
 - `value` : la valeur correspondante (Developer / Growth / UX/UI / Data / PO/PM / DevOps)
 
-Afficher l'URL de l'issue et un récapitulatif des liaisons établies (parent, bloquants).
+Afficher l'URL de l'issue et un récapitulatif des champs définis et des liaisons établies (parent, bloquants).
+
+---
+
+## Modifier une issue existante
+
+Si l'utilisateur veut modifier une issue déjà créée (titre, description, assignees, ou n'importe quel champ du Project), utiliser `update_issue` avec le **numéro de l'issue** et uniquement les champs à changer :
+
+```
+update_issue({
+  issue_number: 123,
+  title?: "...",
+  description?: "...",
+  assignees?: ["login"],
+  status?: "en-cours",
+  team?: "Developer",
+  epic?: "...",
+  approver?: "Kevin",
+  sprint?: "Sprint 1",
+  priority?: "High",
+  type?: "Bug",
+})
+```
+
+`update_issue` résout automatiquement les IDs internes (node ID, project item ID) depuis le numéro d'issue — pas besoin de les fournir.
+
+---
 
 > **Si le MCP n'est pas disponible** (outil `create_issue` absent) : le connecteur `lba-github` n'est pas activé pour cet utilisateur. Copier le markdown généré et créer l'issue manuellement sur GitHub.
