@@ -33,10 +33,11 @@ L'audience est large : dev, PO, data, bizdev, growth. Tout le monde doit pouvoir
 6. **Zone technique** : UI / Serveur / Shared / je ne sais pas
 7. **Fichiers ou routes concernés** (optionnel) : passer si l'utilisateur ne sait pas
 8. **Équipe** : Developer / Growth / UX/UI / Data / PO/PM / DevOps (optionnel — passer si incertain)
-9. **Assignee** (optionnel) : si l'utilisateur veut assigner, appeler `list_members` pour proposer la liste, sinon passer
+9. **Assignee** (optionnel) : dès que l'utilisateur veut assigner quelqu'un, appeler `list_members` proactivement et présenter la liste directement — ne pas attendre qu'il la demande. Ne jamais assigner ou déduire une équipe à partir d'une simple mention d'une personne dans le titre ou la description : une mention n'est pas une demande d'assignation. Si aucune assignation n'est explicitement demandée, laisser le champ vide.
 10. **Priorité** : P1 bloquant / P2 important / P3 normal / P4 faible
-11. **Issue parente** (optionnel) : cette issue est-elle une sous-issue d'un ticket existant ? Si oui, demander le numéro (`#123`)
-12. **Bloquée par** (optionnel) : cette issue est-elle bloquée par d'autres tickets ? Si oui, demander les numéros (ex. `#45, #67`)
+11. **Sprint** (optionnel) : veut-il assigner ce ticket à un sprint, y compris un sprint futur ? Appeler `list_sprints` pour proposer la liste (avec dates), passer si l'utilisateur ne sait pas ou ne veut pas
+12. **Issue parente** (optionnel) : cette issue est-elle une sous-issue d'un ticket existant ? Si un numéro de ticket a déjà été mentionné par l'utilisateur en décrivant CETTE issue (message initial ou immédiatement précédent), ne pas reposer la question — utiliser directement ce numéro. Ne jamais réutiliser un numéro mentionné pour une issue différente créée plus tôt dans la même conversation. Sinon, demander le numéro (`#123`)
+13. **Bloquée par** (optionnel) : cette issue est-elle bloquée par d'autres tickets ? Si oui, demander les numéros (ex. `#45, #67`)
 
 ---
 
@@ -189,6 +190,15 @@ Utilise le **project item ID** :
 - `id` : le project item ID de l'étape 1
 - `field` : `"team"`
 - `value` : la valeur correspondante (Developer / Growth / UX/UI / Data / PO/PM / DevOps)
+
+**Étape 5 — Définir le sprint** (si l'utilisateur en a renseigné un)
+
+Utilise le **project item ID** :
+
+`set_project_field` — sprint :
+- `id` : le project item ID de l'étape 1
+- `field` : `"sprint"`
+- `value` : titre exact du sprint (voir `list_sprints`), ou `"current"` pour le sprint en cours
 
 Afficher l'URL de l'issue et un récapitulatif des champs définis et des liaisons établies (parent, bloquants).
 
