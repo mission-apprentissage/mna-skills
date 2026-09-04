@@ -86,6 +86,10 @@ Allocations inutiles, boucles inefficaces, appels DB répétés (N+1), re-render
 ### STEP 9 — Maintenabilité
 Lisibilité, modularité, nommage, cohérence. Logique dupliquée, fonctions trop longues, conditionnelles complexes.
 
+### STEP 10 — Accessibilité RGAA (si et seulement si l'UI est impactée)
+Condition (même définition que la section « Périmètre UI impactée » de `review-rgaa`) : le diff touche au moins un fichier de `ui/app`, `ui/components`, `ui/styles`, `ui/public/styles`, `ui/theme`, ou un fichier de `ui/utils` / `shared/src` qui produit du texte affiché : libellés et constantes d'affichage (`shared/src/constants`), messages de validation Zod (`shared/src/models`, `shared/src/validators`), titres de page (`ui/utils/routes.metadata.utils.ts`), messages d'erreur. Sont exclus `*.test.*`, `ui/e2e`, `ui/scripts`, `ui/config*`, `ui/services` (hors chaînes affichées) et les fichiers de configuration. Un changement de libellé dans `shared` déclenche donc bien l'étape. Sinon, écrire « STEP 10 : sans objet » et passer.
+Si la condition est remplie, invoquer le skill `review-rgaa` en **mode intégré** sur le même diff : il vérifie les modifications selon RGAA 4.1.2 / WCAG 2.2 AA / WAI-ARIA 1.2, relève les défauts préexistants sur les composants et pages touchés, et chiffre le gain sur le taux de conformité. Ses findings sont numérotés `R1, R2…` ; un `Rn` Bloquant issu du diff compte dans les bloquants de la revue, les préexistants vont dans « Dette accessibilité ».
+
 ---
 
 ## 4. Angles morts récurrents (à passer systématiquement)
@@ -141,6 +145,7 @@ Concis : le fait, la preuve, l'action. Pas de prose d'ouverture ni de clôture.
 Qualité : Excellent / Bon / Acceptable / Insuffisant
 Bloquants : X   Sécurité : X   Améliorations : X
 Vérifié par : <commandes lancées, CI, repro>   Confiance : Élevée / Moyenne / Faible
+RGAA : <n> findings (B/M/m) · gain potentiel +<x> pts   (uniquement si STEP 10 a été exécuté)
 ```
 
 Puis, dans l'ordre, en omettant toute section vide :
@@ -149,6 +154,7 @@ Puis, dans l'ordre, en omettant toute section vide :
 **Sécurité** — les vulnérabilités trouvées. Si rien : une ligne, « Aucune vulnérabilité évidente détectée ».
 **À discuter** — arbitrages qui appartiennent à l'auteur ou à l'équipe.
 **Améliorations** — non bloquant : refactoring, typage, lisibilité, architecture.
+**Accessibilité (RGAA)** — si STEP 10 exécuté : findings `Rn` du diff (critère, fichier:ligne, correction, points), puis « Dette accessibilité » pour les préexistants avec le gain chiffré. Format détaillé dans `review-rgaa`.
 **Points positifs** — ce qui est bien fait, spécifique, deux lignes maximum.
 
 Terminer par un `AskUserQuestion` proposant les suites réellement fréquentes : appliquer les corrections (toutes, ou une sélection par numéro), publier la revue sur la PR, traiter les commentaires Copilot, approfondir un point, enchaîner `/pull-request-lba`.
