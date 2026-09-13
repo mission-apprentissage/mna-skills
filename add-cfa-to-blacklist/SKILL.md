@@ -75,10 +75,16 @@ Avant d'insérer, avertir (sans bloquer) si un nom est risqué :
 Lancer le script fourni avec le skill (Node, sans dépendance). Il normalise, détecte les doublons et insère
 chaque entrée à sa place alphabétique sans retrier la liste existante :
 
+Toujours passer les noms **par stdin avec un heredoc à délimiteur quoté** (`<<'NAMES'`), jamais en arguments
+interpolés : un libellé venu d'une demande support peut contenir `"`, `$(` ou des backticks, et le heredoc quoté
+neutralise toute interprétation par le shell.
+
 ```bash
-node "${CLAUDE_SKILL_DIR}/scripts/add-cfa.mjs" \
-  --file server/src/jobs/offre-partenaire/is-company-in-blocked-cfa-list.ts \
-  "<nom 1>" "<nom 2>"
+node "${CLAUDE_SKILL_DIR}/scripts/add-cfa.mjs" --stdin \
+  --file server/src/jobs/offre-partenaire/is-company-in-blocked-cfa-list.ts <<'NAMES'
+<nom 1>
+<nom 2>
+NAMES
 ```
 
 Le script imprime un tableau `Entrée fournie | Normalisée | Résultat` puis :
@@ -87,12 +93,16 @@ Le script imprime un tableau `Entrée fournie | Normalisée | Résultat` puis :
 - code retour `1` → fichier non trouvé ou format inattendu → afficher l'erreur et s'arrêter.
 
 Règles appliquées par le script (ne pas les refaire à la main) :
-- normalisation : majuscules, sans accents, apostrophes typographiques → `'`, espaces multiples → un seul
-  (`Cfa Élite Formation` → `CFA ELITE FORMATION`) ;
+- normalisation : majuscules, sans accents ni ligatures (`Œ` → `OE`, `ß` → `SS`), apostrophes typographiques → `'`,
+  espaces multiples → un seul (`Cfa Élite Formation` → `CFA ELITE FORMATION`) ;
 - doublon : comparaison avec la même normalisation que le runtime (`stringNormaliser` de `shared`), donc
   `Académie du Tourisme` est reconnu comme déjà présent via `ACADÉMIE DU TOURISME` ;
 - position : avant la première entrée existante qui trie après (comparaison sans accents). La liste actuelle
   n'est pas strictement triée, on ne la retrie pas (ça ferait un diff de 1 700 lignes).
+- avertissements ⚠️ (l'entrée est quand même insérée) : « déjà couverte par inclusion via `X` » (le runtime
+  bloque déjà ce nom grâce à une entrée plus courte, l'ajout est probablement inutile) ou « couvrirait N entrées
+  existantes » (le nom est court/générique et bloquerait large). Dans les deux cas, relayer l'avertissement à
+  l'utilisateur à l'étape 3 et lui laisser décider.
 
 Ne jamais supprimer ou modifier une entrée existante avec ce skill.
 
