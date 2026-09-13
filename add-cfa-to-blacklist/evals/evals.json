@@ -1,0 +1,73 @@
+{
+  "skill_name": "add-cfa-to-blacklist",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "/add-cfa-to-blacklist Cfa Élite Formation",
+      "expected_output": "L'agent vérifie le repo et le working tree, lance le script add-cfa.mjs, affiche un tableau montrant « Cfa Élite Formation » normalisé en « CFA ELITE FORMATION » inséré entre « CFA ECOLE SANTE ET JURIDIQUE » et « CFA ENGIE », montre le diff (une seule ligne ajoutée), demande confirmation, puis invoque /pull-request-lba en type fix sans issue avec branche, commit, titre et body pré-rédigés.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "normalizes_uppercase_no_accents",
+          "text": "Le nom est normalisé en majuscules non accentuées : CFA ELITE FORMATION"
+        },
+        {
+          "id": "uses_script_not_manual_edit",
+          "text": "L'insertion est faite via le script scripts/add-cfa.mjs, pas par édition manuelle du tableau"
+        },
+        {
+          "id": "alphabetical_position",
+          "text": "L'entrée est insérée avant CFA ENGIE et la liste existante n'est pas retriée (diff = lignes ajoutées uniquement)"
+        },
+        {
+          "id": "asks_confirmation_before_pr",
+          "text": "L'agent demande confirmation après avoir montré le diff et avant d'ouvrir la PR"
+        },
+        {
+          "id": "pr_via_pull_request_lba_without_issue",
+          "text": "La PR est ouverte via /pull-request-lba en type fix, sans issue liée (pas de Closes #), depuis une branche créée à partir de origin/main, jamais de commit sur main"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "/add-cfa-to-blacklist",
+      "expected_output": "L'agent pose une seule question demandant le ou les libellés exacts des CFA à blacklister (un par ligne ou séparés par « ; ») et attend la réponse avant toute action sur le fichier.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "single_question",
+          "text": "L'agent pose une seule question pour obtenir les libellés, sans enchaîner d'autres questions"
+        },
+        {
+          "id": "no_file_change_before_answer",
+          "text": "Aucune modification de fichier ni commande git de création de branche avant la réponse de l'utilisateur"
+        },
+        {
+          "id": "french_output",
+          "text": "La question est en français"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/add-cfa-to-blacklist Académie du Tourisme ; win genève",
+      "expected_output": "Le script détecte que les deux entrées existent déjà (ACADÉMIE DU TOURISME et WIN GENÈVE, comparaison insensible aux accents et à la casse). L'agent affiche le tableau des doublons, indique qu'aucune insertion n'a été faite et n'ouvre pas de PR.",
+      "files": [],
+      "assertions": [
+        {
+          "id": "detects_duplicates_accent_insensitive",
+          "text": "Les deux entrées sont reconnues comme déjà présentes malgré les différences d'accents et de casse"
+        },
+        {
+          "id": "no_pr_when_nothing_inserted",
+          "text": "Aucune branche, aucun commit et aucune PR ne sont créés quand rien n'a été inséré"
+        },
+        {
+          "id": "file_untouched",
+          "text": "Le fichier is-company-in-blocked-cfa-list.ts n'est pas modifié"
+        }
+      ]
+    }
+  ]
+}

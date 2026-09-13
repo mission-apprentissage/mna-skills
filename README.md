@@ -6,8 +6,8 @@ Skills Claude pour la mission apprentissage.
 
 Les skills sont auto-découverts au démarrage de Claude Code si le dossier est présent dans le projet. Pour utiliser ces skills dans un projet :
 
-1. Cloner ce repo dans le dossier `.claude/skills/` de ton projet (ou globalement dans `~/.claude/skills/`)
-2. Redémarrer Claude Code — les skills apparaissent automatiquement
+1. Les skills sont distribués via l'organisation Claude : rien à installer pour les membres.
+2. Pour tester une modification en local avant publication : copier le dossier du skill dans `~/.claude/skills/` et redémarrer Claude Code.
 
 Chaque skill s'active via `/nom-du-skill` dans la conversation.
 
