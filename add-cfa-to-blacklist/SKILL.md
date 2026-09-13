@@ -25,25 +25,35 @@ Arguments reçus : `$ARGUMENTS`
 
 ## Étape 0 — Pré-requis
 
-Vérifier qu'on est dans un clone de La Bonne Alternance et que le working tree est propre :
+Tout vérifier **avant de toucher au fichier**. Lancer ce bloc en une fois et lire chaque ligne :
 
 ```bash
-git remote -v | grep -q "mission-apprentissage/labonnealternance" && echo "repo OK" || echo "PAS LE BON REPO"
-git status --porcelain
-git fetch origin main
+echo "repo      : $(git remote -v 2>/dev/null | grep -q 'mission-apprentissage/labonnealternance' && echo OK || echo KO)"
+echo "gh        : $(gh auth status >/dev/null 2>&1 && echo OK || echo KO)"
+echo "gh accès  : $(gh repo view mission-apprentissage/labonnealternance --json name -q .name >/dev/null 2>&1 && echo OK || echo KO)"
+echo "node      : $(node --version 2>/dev/null || echo KO)"
+echo "yarn deps : $([ -d node_modules ] && echo OK || echo KO)"
+echo "script    : $([ -f "${CLAUDE_SKILL_DIR}/scripts/add-cfa.mjs" ] && echo OK || echo KO)"
+echo "tree      : $([ -z "$(git status --porcelain)" ] && echo propre || echo SALE)"
+git fetch origin main -q && echo "fetch     : OK" || echo "fetch     : KO"
+echo "fichier   : $(git diff --quiet origin/main -- server/src/jobs/offre-partenaire/is-company-in-blocked-cfa-list.ts && echo 'identique à origin/main' || echo 'DIFFÉRENT de origin/main')"
 ```
 
-- **Pas le bon repo** → demander le chemin du clone local de `labonnealternance` et y exécuter toutes les commandes.
-- **Working tree non vide** → s'arrêter et demander à l'utilisateur de committer ou mettre de côté ses changements
-  (`/pull-request-lba` crée une branche depuis `origin/main` avec `git add -A` : tout changement en cours partirait dans la PR).
-- Vérifier que le fichier local est à jour par rapport à `origin/main` :
+Si une ligne est KO, s'arrêter et expliquer quoi faire. Ne pas contourner :
 
-```bash
-git diff --quiet origin/main -- server/src/jobs/offre-partenaire/is-company-in-blocked-cfa-list.ts && echo "fichier à jour" || echo "FICHIER DIFFÉRENT DE origin/main"
-```
+| Ligne | Si KO |
+|---|---|
+| repo | Pas dans un clone de La Bonne Alternance. Demander le chemin du clone local et y exécuter toutes les commandes. Sans clone local, le skill ne peut pas fonctionner. |
+| gh | `gh` absent ou non connecté : `gh auth login` (compte GitHub membre de l'org `mission-apprentissage`). |
+| gh accès | Le compte n'a pas accès au repo : demander l'ajout à l'org. |
+| node | Node.js requis pour le script d'insertion. L'installer (le repo en a besoin de toute façon). |
+| yarn deps | `yarn install` à lancer dans le repo : `yarn check:fix` et les hooks de pre-commit (lint-staged, gitleaks) en dépendent. Sans ça, le commit échouera après modification du fichier. |
+| script | `${CLAUDE_SKILL_DIR}` non résolu ou skill incomplet : vérifier l'installation du skill (dossier `scripts/` présent). |
+| tree | Working tree non vide : demander à l'utilisateur de committer ou mettre de côté ses changements. `/pull-request-lba` fait `git add -A` sur une branche créée depuis `origin/main` : tout changement en cours partirait dans la PR. |
+| fetch | Pas de réseau ou remote inaccessible. |
+| fichier | Le fichier local n'est pas celui de `main` (branche en retard). Le remettre à l'état de `main` avant de continuer, la PR doit partir de là : `git checkout origin/main -- server/src/jobs/offre-partenaire/is-company-in-blocked-cfa-list.ts` |
 
-Si différent → `git checkout origin/main -- server/src/jobs/offre-partenaire/is-company-in-blocked-cfa-list.ts` avant de continuer
-(la PR doit partir de l'état de `main`).
+Quand tout est OK, continuer.
 
 ---
 
