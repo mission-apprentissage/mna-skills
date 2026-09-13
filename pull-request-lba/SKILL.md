@@ -41,6 +41,7 @@ Les arguments peuvent être passés directement après la commande :
 - `/lba-pr fix 1234` → type = `fix`, issue = `1234`
 - `/lba-pr https://github.com/mission-apprentissage/labonnealternance/issues/4691` → extraire `4691`, demander le type
 - `/lba-pr feat https://github.com/.../issues/4691` → type = `feat`, issue = `4691`
+- `/lba-pr fix aucune` → type = `fix`, **sans issue** (cas C ci-dessous)
 
 Si l'argument est une URL GitHub d'issue, extraire le numéro automatiquement depuis le path.
 
@@ -53,7 +54,8 @@ Quel type de changement ?
   3) chore — maintenance, dépendances, config
 
 Quel est le numéro de l'issue GitHub ?
-  (ex: 1234, une URL GitHub, ou "créer" pour en créer une nouvelle)
+  (ex: 1234, une URL GitHub, "créer" pour en créer une nouvelle,
+   ou "aucune" pour une PR sans issue)
 ```
 
 Attendre la réponse avant de continuer.
@@ -144,6 +146,13 @@ gh project item-edit \
 ```
 
 Afficher : "Issue #<NUMERO> créée et ajoutée au projet en 'en-cours' : <URL>"
+
+### Cas C — Aucune issue ("aucune")
+
+Pas d'issue à créer ni de statut à mettre à jour. Passer directement à l'étape 3, puis utiliser les variantes
+« Sans issue » des étapes 4 (nom de branche) et 8 (body de PR sans `Closes #`).
+
+Cas typique : PR mécanique déclenchée par un autre skill (ex. `/add-cfa-to-blacklist`), correctif trivial sans ticket.
 
 ## Étape 3 — Vérifier l'état Git
 
@@ -251,6 +260,8 @@ la gestion du statut (deux items indépendants au lieu d'un).
 
 ## Notes
 
+- Si ce skill est invoqué par un autre skill qui fournit un nom de branche, un message de commit, un titre
+  et un body de PR pré-rédigés, les utiliser tels quels au lieu de les inférer
 - Le login GitHub de l'utilisateur est résolu en mémoire à l'étape 0 (`user_github_login.md`)
 - Branches nommées `<type>/issue-<NUMERO>` (minuscules)
 - Ne jamais force-push sur `main`
