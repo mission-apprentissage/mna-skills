@@ -1,11 +1,22 @@
 ---
 name: review-code
-description: "Revue de code TypeScript / Node.js / React / Next.js / GitHub Actions / YAML : analyse une PR, une branche, un diff ou des fichiers, puis applique les corrections et publie la revue. Déclenche sur : 'review', 'revue de code', 'relis ce code', 'check ma PR', 'des corrections à apporter ?', 'check les retours copilot', ou une URL de PR passée en argument."
+description: "Revue de code TypeScript / Node.js / React / Next.js / GitHub Actions / YAML : analyse une PR, une branche, un diff ou des fichiers, puis applique les corrections et publie la revue. Déclenche sur : 'review', 'revue de code', 'relis ce code', 'check ma PR', 'des corrections à apporter ?', 'check les retours copilot', ou une URL de PR passée en argument. La revue tourne toujours dans un agent neuf et neutre, jamais dans la session qui a écrit le code."
 ---
 
 # review-code — Revue de code
 
 Tu agis comme Staff Engineer, Security Engineer et mainteneur open source. La revue est **la tienne** : ne la délègue pas à un outil externe.
+
+---
+
+## 0. Lancer la revue dans un agent neuf
+
+La revue tourne toujours dans un agent neuf et neutre, jamais dans la session qui a écrit, briefé ou déjà relu le code. Un auteur relit son intention, pas son code : sur la PR mission-apprentissage/labonnealternance#5828, un commentaire promettait un verrou « rafraîchi quelle que soit sa durée », le code ne le tenait pas pendant l'attente, et la session autrice ne l'a pas vu en revue.
+
+- **Session qui reçoit la demande** : lancer un agent neuf (outil Agent, sans fork du contexte) dont la consigne est d'invoquer ce skill sur la cible (`/review-code <cible>`). Ne pas faire la revue soi-même, même quand elle paraît courte.
+- **Brief de l'agent** : la cible seulement (URL de PR, branche, chemin du worktree) et, en seconde passe, la numérotation de la revue précédente. Ni résumé du changement, ni intention, ni hypothèses, ni « points à vérifier » : ce que l'auteur croit est précisément ce qu'il ne faut pas transmettre.
+- **Retour** : l'agent rend sa restitution (§6). La session principale la relaie sans la réécrire ni la filtrer, puis pose l'`AskUserQuestion` de fin, applique ou publie.
+- **Si tu es cet agent** : exécuter la revue directement, sans relancer d'agent.
 
 ---
 
@@ -90,7 +101,7 @@ Lisibilité, modularité, nommage, cohérence. Logique dupliquée, fonctions tro
 
 ## 4. Angles morts récurrents (à passer systématiquement)
 
-Six vérifications qui ont chacune laissé passer un bug bloquant en revue réelle. Aucune n'est couverte par les STEP ci-dessus, qui regardent le code écrit et non ce qui manque autour.
+Huit vérifications qui ont chacune laissé passer un bug bloquant en revue réelle. Aucune n'est couverte par les STEP ci-dessus, qui regardent le code écrit et non ce qui manque autour.
 
 ### A — Détecteurs et heuristiques : chercher le faux positif
 Pour tout code qui décide « est-ce que X est utilisé / présent / pertinent », demander : **quel est l'input réaliste le moins cher qui fait répondre faux ?**
@@ -114,6 +125,12 @@ Si le code est calqué sur un fichier existant, differ contre l'original et exig
 
 ### F — Portée réelle des commandes de vérification
 Avant de conclure « les types passent », vérifier ce que la commande couvre : un `tsconfig.json` peut exclure un sous-dossier, un `testPathIgnorePatterns` sauter un répertoire, un glob rater une extension. Confirmer la couverture avant de rapporter un vert.
+
+### G — Commentaires et docblocks : un contrat à vérifier
+Un commentaire qui promet un comportement (« toujours », « quelle que soit », « garanti », « ne peut pas ») se vérifie contre le flot de contrôle, ligne à ligne. Il décrit souvent l'intention de l'auteur, que le code peut ne tenir qu'en partie. Un écart est un finding, même quand le code « fait à peu près ça ».
+
+### H — Mécanismes à durée de vie : vérifier chaque phase
+Verrou, lease, revendication de document, cache à TTL : lister les phases (acquisition, attente, exécution, libération, process tué) et, pour chacune, l'instruction qui prolonge ou libère. Chercher chez les appelants les couples (attente, TTL) et exiger un test où l'attente atteint le TTL, avec un TTL court. Cas réel : un heartbeat démarré après la boucle d'attente laissait expirer les verrous déjà pris pendant que l'appelant (attente 60 min, TTL 60 min) attendait les autres.
 
 ---
 
@@ -223,3 +240,4 @@ Demande récurrente (« check les retours copilot ») — la traiter par défaut
 - Justifier chaque critique, proposer une correction concrète.
 - Ne pas inventer de problème ni spéculer sans preuve. Pas de finding de remplissage pour étoffer une revue vide : une revue sans bloquant se dit en une ligne.
 - Ne jamais affirmer un comportement sans l'avoir exécuté (cf. section 5).
+- Ne jamais relire son propre travail : la revue part d'un agent neuf (cf. section 0).
