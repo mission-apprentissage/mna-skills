@@ -5,7 +5,7 @@ description: >
   Synchronise aussi le statut de l'issue liée dans le GitHub Project "La bonne alternance".
   Déclencher dès que l'utilisateur veut créer une PR, une branche, commiter son travail, soumettre
   pour review, ou qu'il passe un numéro d'issue ou une URL GitHub en argument — même sans mentionner
-  "/lba-pr" explicitement.
+  "/pull-request-lba" explicitement.
 ---
 
 # Skill : LBA PR
@@ -37,10 +37,10 @@ Vérifier en mémoire si le login GitHub de l'utilisateur est connu (fichier `us
 
 Les arguments peuvent être passés directement après la commande :
 
-- `/lba-pr feat 3456` → type = `feat`, issue = `3456`
-- `/lba-pr fix 1234` → type = `fix`, issue = `1234`
-- `/lba-pr https://github.com/mission-apprentissage/labonnealternance/issues/4691` → extraire `4691`, demander le type
-- `/lba-pr feat https://github.com/.../issues/4691` → type = `feat`, issue = `4691`
+- `/pull-request-lba feat 3456` → type = `feat`, issue = `3456`
+- `/pull-request-lba fix 1234` → type = `fix`, issue = `1234`
+- `/pull-request-lba https://github.com/mission-apprentissage/labonnealternance/issues/4691` → extraire `4691`, demander le type
+- `/pull-request-lba feat https://github.com/.../issues/4691` → type = `feat`, issue = `4691`
 
 Si l'argument est une URL GitHub d'issue, extraire le numéro automatiquement depuis le path.
 
@@ -50,7 +50,9 @@ Si des informations manquent, poser les questions manquantes **en une seule fois
 Quel type de changement ?
   1) feat  — nouvelle fonctionnalité
   2) fix   — correction de bug
-  3) chore — maintenance, dépendances, config
+  3) refactor — restructuration sans changement de comportement
+  4) chore — maintenance, dépendances, config
+  5) docs  — documentation
 
 Quel est le numéro de l'issue GitHub ?
   (ex: 1234, une URL GitHub, ou "créer" pour en créer une nouvelle)
@@ -203,14 +205,15 @@ git push -u origin <nom-branche>
 
 ## Étape 8 — Créer la PR
 
-Le titre ne contient pas le numéro d'issue — `Closes #XXXX` dans le body établit le lien.
-Ne jamais écrire `#N` dans le body sauf pour `Closes #N` : GitHub transforme tout `#N` en
+Avec une issue, le titre se termine par son numéro : `<type>: <description> (#<NUMERO>)`.
+`Closes #<NUMERO>` dans le body établit en plus le lien de fermeture automatique.
+Ne jamais écrire `#N` ailleurs dans le body que pour `Closes #N` : GitHub transforme tout `#N` en
 lien cliquable, ce qui crée des références parasites vers d'autres issues ou PRs.
 
 Avec issue :
 ```bash
 gh pr create \
-  --title "<type>: <description>" \
+  --title "<type>: <description> (#<NUMERO>)" \
   --assignee <ASSIGNEE> \
   --body "$(cat <<'EOF'
 Closes #<NUMERO>
