@@ -1,6 +1,6 @@
 ---
 name: review-code
-description: "Revue de code TypeScript / Node.js / React / Next.js / GitHub Actions / YAML : analyse une PR, une branche, un diff ou des fichiers, puis applique les corrections et publie la revue. Déclenche sur : 'review', 'revue de code', 'relis ce code', 'check ma PR', 'des corrections à apporter ?', 'check les retours copilot', ou une URL de PR passée en argument. La revue tourne toujours dans un agent neuf et neutre, jamais dans la session qui a écrit le code."
+description: "Revue de code TypeScript / Node.js / React / Next.js / GitHub Actions / YAML : analyse une PR, une branche, un diff ou des fichiers, puis applique les corrections et publie la revue. À utiliser pour toute demande de relecture ou de revue de code, de vérification d'une PR ou de traitement des retours de revue (Copilot compris), ou quand une URL de PR est passée en argument. La revue tourne toujours dans un agent neuf et neutre, jamais dans la session qui a écrit le code."
 ---
 
 # review-code — Revue de code
@@ -61,47 +61,18 @@ Si le diff seul ne suffit pas à comprendre, lire les fichiers complets. Si le v
 
 ## 3. Analyser
 
-### STEP 1 — Comprendre le changement
-But de la modification, comportement attendu, fichiers impactés, effets de bord. Si l'intention est floue, l'expliciter.
+Comprendre d'abord le but du changement, le comportement attendu et les effets de bord ; si l'intention est floue, l'expliciter. Passer ensuite le diff au crible : correction fonctionnelle (async, erreurs, cas limites), typage TypeScript et validation des données externes, Node.js, React / Next.js (frontière server/client, aucune donnée sensible côté client), performance (N+1, re-renders), maintenabilité.
 
-### STEP 2 — Correction fonctionnelle
-Logique correcte, types respectés, cas limites, async, erreurs.
-Chercher : `await` manquant, promesses non gérées, null/undefined, race conditions, code mort, conditionnelles inversées.
+Deux angles ne se sautent jamais :
 
-### STEP 3 — Qualité TypeScript
-Typage strict, pas de `any` unsafe, narrowing correct, génériques sûrs, types de retour, validation des données externes.
-
-### STEP 4 — Node.js
-Non-bloquant, patterns async, streams, nettoyage des ressources, propagation des erreurs.
-
-### STEP 5 — React / Next.js (si applicable)
-React : hooks, dépendances, état, rendu, séparation des responsabilités.
-Next.js : frontière server/client, data fetching, routing, aucune donnée sensible côté client.
-
-### STEP 6 — Sécurité (OBLIGATOIRE)
-Injection (XSS, SQL, commande, template), validation des entrées, authn/authz et escalade de privilèges, endpoints non protégés, exposition de secrets, open redirect, SSRF, path traversal. Référence OWASP Top 10.
-
-**GitHub Actions** : triggers dangereux (`issue_comment`, `pull_request_target`) sans gate sur l'auteur, checkout de code de fork, permissions trop larges ou implicites, actions tierces non épinglées à un SHA, injection via `${{ github.event.* }}` dans un `run:`.
-
-### STEP 7 — Tests et couverture
-Vérifier que le changement est testé, pas seulement que la suite passe :
-- chaque branche de comportement nouvelle ou modifiée a-t-elle un test ?
-- les tests couvrent-ils le cas d'échec, pas seulement le cas nominal ?
-- un test ajouté peut-il passer au vert sans rien garantir (`skip`, `return` anticipé, assertion absente) ?
-
-Absence de test sur un chemin critique = finding, au même titre qu'un bug.
-
-### STEP 8 — Performance
-Allocations inutiles, boucles inefficaces, appels DB répétés (N+1), re-renders React, travail synchrone coûteux.
-
-### STEP 9 — Maintenabilité
-Lisibilité, modularité, nommage, cohérence. Logique dupliquée, fonctions trop longues, conditionnelles complexes.
+- **Sécurité** : injection (XSS, SQL, commande, template), validation des entrées, authn/authz et escalade de privilèges, endpoints non protégés, exposition de secrets, open redirect, SSRF, path traversal. **GitHub Actions** : triggers dangereux (`issue_comment`, `pull_request_target`) sans gate sur l'auteur, checkout de code de fork, permissions trop larges ou implicites, actions tierces non épinglées à un SHA, injection via `${{ github.event.* }}` dans un `run:`.
+- **Tests** : vérifier que le changement est testé, pas seulement que la suite passe. Chaque branche de comportement nouvelle ou modifiée a-t-elle un test ? Le cas d'échec est-il couvert, pas seulement le cas nominal ? Un test ajouté peut-il passer au vert sans rien garantir (`skip`, `return` anticipé, assertion absente) ? Absence de test sur un chemin critique = finding, au même titre qu'un bug.
 
 ---
 
 ## 4. Angles morts récurrents (à passer systématiquement)
 
-Huit vérifications qui ont chacune laissé passer un bug bloquant en revue réelle. Aucune n'est couverte par les STEP ci-dessus, qui regardent le code écrit et non ce qui manque autour.
+Huit vérifications qui ont chacune laissé passer un bug bloquant en revue réelle. Aucune n'est couverte par l'analyse ci-dessus, qui regarde le code écrit et non ce qui manque autour.
 
 ### A — Détecteurs et heuristiques : chercher le faux positif
 Pour tout code qui décide « est-ce que X est utilisé / présent / pertinent », demander : **quel est l'input réaliste le moins cher qui fait répondre faux ?**
@@ -168,7 +139,7 @@ Puis, dans l'ordre, en omettant toute section vide :
 **Améliorations** — non bloquant : refactoring, typage, lisibilité, architecture.
 **Points positifs** — ce qui est bien fait, spécifique, deux lignes maximum.
 
-Terminer par un `AskUserQuestion` proposant les suites réellement fréquentes : appliquer les corrections (toutes, ou une sélection par numéro), publier la revue sur la PR, traiter les commentaires Copilot, approfondir un point, enchaîner `/pull-request-lba`.
+La session principale (cf. §0), pas l'agent de revue, termine par un `AskUserQuestion` proposant les suites réellement fréquentes : appliquer les corrections (toutes, ou une sélection par numéro), publier la revue sur la PR, traiter les commentaires Copilot, approfondir un point, enchaîner `/pull-request-lba`.
 
 ---
 
@@ -184,7 +155,7 @@ Ne jamais poster l'analyse détaillée telle quelle. Toujours montrer le texte f
 - Un finding = une phrase en gras qui énonce le fait, puis 2-3 lignes de justification maximum. Pas de tableau, pas de `<details>`, pas d'emoji de sévérité.
 - Un bloquant localisé dans le diff renvoie au commentaire inline (« détail en inline sur la l. N ») au lieu de dupliquer le code corrigé.
 - Rien côté sécurité → le dire en une ligne.
-- **Longueur** : viser 15 lignes. Au-delà, couper — c'est le retour le plus fréquent de l'utilisateur.
+- **Longueur** : lisible d'un coup d'œil. Couper les justifications avant de couper un finding — la longueur est le retour le plus fréquent de l'utilisateur.
 - Markdown GitHub valide et testé mentalement : titres `####`, listes, blocs de code fermés. Pas d'indentation qui casse le rendu.
 
 ### Commentaires inline
