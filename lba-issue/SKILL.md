@@ -62,12 +62,12 @@ Feature/Task : ce qu'on veut faire et pourquoi.]
 - **Zone** : ui / server / shared (ou plusieurs)
 - **Fichiers / routes concernés** : (ex. `server/src/http/controllers/jobs.controller.ts`)
 - **Patterns à suivre** : (ex. voir les autres controllers pour le pattern Fastify + Zod)
-- **Contraintes** : (ex. doit passer `yarn typecheck` et `yarn lint`, ne pas modifier l'API publique)
+- **Contraintes** : (ex. doit passer `yarn typecheck` et `yarn check`, ne pas modifier l'API publique)
 
 ## Définition of Done
 - [ ] Code review approuvée et mergée
 - [ ] `yarn typecheck` passe
-- [ ] `yarn lint` passe
+- [ ] `yarn check` passe (Biome)
 - [ ] Tests ajoutés ou mis à jour si pertinent
 - [ ] Testé en local
 ```
@@ -76,16 +76,8 @@ Feature/Task : ce qu'on veut faire et pourquoi.]
 
 ## Comment enrichir le contexte technique
 
-Si l'utilisateur ne connaît pas les fichiers ou la zone technique, appuie-toi sur cette structure :
+Si l'utilisateur ne connaît pas les fichiers ou la zone technique, appuie-toi sur cette structure (l'agent qui exécute l'issue lit le reste dans le code) :
 
-**Stack :**
-- UI : Next.js 15 App Router, Chakra UI + DSFR (design system gouvernemental français)
-- Server : Fastify + TypeScript strict, MongoDB
-- Shared : Zod schemas et types partagés entre UI et server
-- Tests : Vitest (unit + integration avec MongoDB réel)
-- CI : typecheck + lint + prettier + tests (pas de build en CI)
-
-**Structure :**
 - `ui/app/` — pages Next.js App Router (routes)
 - `ui/components/` — composants réutilisables
 - `server/src/http/controllers/` — handlers API
