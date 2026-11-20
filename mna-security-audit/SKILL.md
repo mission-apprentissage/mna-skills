@@ -16,7 +16,7 @@ Audit mensuel de sécurité sur les 3 repos GitHub de Mission Nationale Apprenti
 | `mission-apprentissage/api-apprentissage` | Yarn Berry |
 
 **Dossier parent des clones locaux** : demander à l'utilisateur au démarrage :
-> "Dans quel dossier se trouvent tes clones locaux des repos MNA ? (ex: `~/Documents/projets/beta`)"
+> "Dans quel dossier se trouvent tes clones locaux des repos MNA ? (ex: `~/code/mission-apprentissage`)"
 
 Utiliser ce chemin comme `<BASE_DIR>` pour toute la session. Si un repo est absent à cet emplacement, le cloner dans `/tmp/mna-audit-<REPO>`.
 
