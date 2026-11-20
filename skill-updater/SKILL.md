@@ -17,11 +17,16 @@ en analysant ce qui doit changer, en appliquant les modifications et en généra
 
 ## Étape 1 — Identifier le skill à améliorer
 
+**Clone local du repo org** : demander à l'utilisateur au démarrage :
+> "Où se trouve ton clone local du repo `mission-apprentissage/mna-skills` ? (ex: `~/code/mission-apprentissage/mna-skills`)"
+
+Utiliser ce chemin comme `<MNA_SKILLS_DIR>` pour toute la session. Si l'utilisateur n'a pas de clone local, se rabattre sur `~/.claude/skills/` uniquement.
+
 Si le nom du skill est passé en argument, utilise-le directement.
 
 Sinon, liste les skills disponibles dans le repo org en priorité, puis en local :
 ```bash
-ls ~/Documents/_project/beta/mna-skills/
+ls <MNA_SKILLS_DIR>/
 ls ~/.claude/skills/
 ```
 Demande lequel améliorer si ce n'est pas clair.
@@ -56,7 +61,7 @@ Demander à l'utilisateur de coller les feedbacks directement dans la conversati
 ## Étape 3 — Lire le SKILL.md actuel
 
 Chercher dans cet ordre :
-1. `~/Documents/_project/beta/mna-skills/<skill-name>/SKILL.md` (repo org — source de vérité)
+1. `<MNA_SKILLS_DIR>/<skill-name>/SKILL.md` (repo org — source de vérité)
 2. `~/.claude/skills/<skill-name>/SKILL.md` (fallback local)
 
 Lire le fichier trouvé et noter son chemin source.
