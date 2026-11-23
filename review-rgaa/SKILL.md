@@ -1,6 +1,6 @@
 ---
 name: review-rgaa
-description: "Revue d'accessibilité du code UI (React / Next.js / MUI / react-dsfr) selon RGAA 4.1.2, WCAG 2.2 AA et WAI-ARIA 1.2 : contrôle les modifications d'une PR, d'une branche ou d'un diff, détecte les défauts préexistants sur les composants et pages touchés, chiffre le gain sur le taux de conformité RGAA et propose les corrections. Déclenche sur : '/review-rgaa', 'accessibilité', 'a11y', 'RGAA', 'WCAG', 'ARIA', 'lecteur d'écran', 'navigation clavier', 'contraste', ou depuis review-code (STEP 10) quand la PR touche l'UI."
+description: "Revue d'accessibilité du code UI (React / Next.js / MUI / react-dsfr) selon RGAA 4.1.2, WCAG 2.2 AA et WAI-ARIA 1.2 : contrôle les modifications d'une PR, d'une branche ou d'un diff, détecte les défauts préexistants sur les composants et pages touchés, chiffre le gain sur le taux de conformité RGAA et propose les corrections. Déclenche sur : '/review-rgaa', 'accessibilité', 'a11y', 'RGAA', 'WCAG', 'ARIA', 'lecteur d'écran', 'navigation clavier', 'contraste', ou depuis review-code (contrôle RGAA du §3 « Analyser ») quand la PR touche l'UI."
 ---
 
 # review-rgaa — Revue d'accessibilité RGAA / WCAG / ARIA
@@ -44,7 +44,7 @@ Si la cible ne contient aucun fichier UI : le dire en une ligne et s'arrêter. P
 ### Mode autonome (`/review-rgaa`)
 Suivre les sections 3 à 7 en entier. La restitution est celle de la section 6.
 
-### Mode intégré (appelé par review-code, STEP 10)
+### Mode intégré (appelé par review-code, contrôle RGAA du §3)
 review-code appelle ce skill **si et seulement si** la PR impacte l'UI (définition ci-dessus). Alors :
 - Exécuter les sections 3, 4 et 5 sur le même diff, sans recharger le contexte déjà rassemblé par review-code.
 - Restituer dans la revue globale sous un titre `**Accessibilité (RGAA)**`, numérotation `R1, R2…` distincte de `C/D/A`.
