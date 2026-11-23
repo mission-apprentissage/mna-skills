@@ -145,7 +145,7 @@ const id = useId(); const helperId = `${id}-helper`
   slotProps={{ htmlInput: { autoComplete: "tel", inputMode: "tel", "aria-describedby": helperId }, formHelperText: { id: helperId } }}
 />
 // Sans TextField : <FormLabel htmlFor={id}> + <Input id={id} /> + <FormHelperText id={helperId}> et aria-describedby sur l'input.
-// Jamais <FormLabel> sans htmlFor à côté d'un <Input> sans id (finding 11.1 des pages P21, P22, P27).
+// Jamais <FormLabel> sans htmlFor à côté d'un <Input> sans id (finding 11.1 de l'audit 2025 sur P21, P22, P27, corrigé depuis).
 ```
 
 ### Cases à cocher, radios, groupes (11.1, 11.5, 11.6)
@@ -209,7 +209,7 @@ const labelId = useId(); const statusId = useId()
 {/* 7.5 : zone live présente dès le premier rendu, mise à jour au changement des options */}
 <div id={statusId} role="status" className={fr.cx("fr-sr-only")}>{isOpen ? `${options.length} suggestions disponibles, utilisez les flèches pour naviguer` : ""}</div>
 ```
-Downshift (`useCombobox`) : passer `getLabelProps()` sur un vrai `<label>`, `getInputProps({ "aria-describedby": statusId })`, `getMenuProps()` sur le `<ul>`, `getItemProps()` sur chaque `<li>` (rôle `option`). Un `placeholder` seul n'est pas une étiquette (finding 11.1 P22, P23, P24).
+Downshift (`useCombobox`) : passer `getLabelProps()` sur un vrai `<label>`, `getInputProps({ "aria-describedby": statusId })`, `getMenuProps()` sur le `<ul>`, `getItemProps()` sur chaque `<li>` (rôle `option`). Un `placeholder` seul n'est pas une étiquette (finding 11.1 de l'audit 2025 sur P22, P23, P24, corrigé depuis).
 
 ### Dépôt de fichier (react-dropzone) (7.3, 11.10, 12.8, WCAG 2.5.7)
 

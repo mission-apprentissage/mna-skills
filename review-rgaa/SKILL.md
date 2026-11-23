@@ -57,15 +57,15 @@ review-code appelle ce skill **si et seulement si** la PR impacte l'UI (définit
 ## 3. Rassembler le contexte
 
 1. **Fichiers UI du diff** et, pour chaque composant modifié, ses **consommateurs** (`grep -rl "from \"@/…/Composant\""` dans `ui/`) jusqu'aux fichiers `page.tsx` ou `layout.tsx` : c'est la liste des pages touchées.
-2. **Correspondance avec l'échantillon d'audit** : pour chaque page touchée, chercher son numéro `Pxx` dans `references/audit-2025.md` (tableau routes → pages). Relever les critères déjà NC sur ces pages : ce sont les défauts préexistants à confirmer ou infirmer sur le code actuel.
-3. **Composants transverses** : si le diff touche `ui/app/_components/Header.tsx`, `HeaderNavigation.tsx`, `Footer.tsx`, `Breadcrumb.tsx`, `ui/app/layout.tsx`, `ui/components/head.tsx` ou un `layout.tsx` de groupe, toutes les pages sont concernées. Le dire, et pointer les 7 critères transverses NC de l'audit (6.1, 9.1, 9.2, 10.2, 12.1, 12.6, 12.8).
+2. **Correspondance avec l'échantillon d'audit** : pour chaque page touchée, chercher son numéro `Pxx` dans `references/audit.md` (tableau routes → pages, colonne « Critères NC »). Relever les critères encore NC sur ces pages : ce sont les défauts préexistants à confirmer ou infirmer sur le code actuel.
+3. **Composants transverses** : si le diff touche `ui/app/_components/Header.tsx`, `HeaderNavigation.tsx`, `Footer.tsx`, `Breadcrumb.tsx`, `ui/app/layout.tsx`, `ui/components/head.tsx` ou un `layout.tsx` de groupe, toutes les pages sont concernées. Le dire, et pointer les 3 critères transverses NC de la grille (9.1 et 10.2 sur les 27 pages, 12.1 sur 26), ainsi que les transverses corrigés depuis 2025 (6.1, 9.2, 12.6, 12.8) dont la régression coûterait 1,64 pt chacun.
 4. **Lire les fichiers complets**, pas seulement le diff : un `aria-labelledby` ajouté ne vaut que si l'`id` existe et est unique dans la page rendue.
 5. **Titres de page** : vérifier `METADATA` dans `ui/utils/routes.metadata.utils.ts` (registre server-only, cf. #5214 ; `routes.utils.ts` n'en garde qu'un commentaire de renvoi) ou la constante `metadata` du `page.tsx`, quand une page est ajoutée ou renommée.
 
 Charger les références selon le besoin :
 - `references/criteres.md` — les 106 critères, test de code par critère, correspondance WCAG 2.2, ce qui est vérifiable statiquement ou au runtime, statut audit.
 - `references/patterns-stack.md` — patterns corrects et pièges pour react-dsfr, MUI, Next.js, Formik dans ce repo.
-- `references/audit-2025.md` — audit du 25/11/2025 : score, critères NC par page, tickets par composant, méthode de calcul des points.
+- `references/audit.md` — grille du 21/10/2026 : score, critères NC par page, tickets 2025 encore ouverts, critères corrigés depuis 2025, méthode de calcul des points.
 
 ---
 
@@ -97,7 +97,7 @@ Pour chaque finding, exiger les quatre éléments : **critère** (n° RGAA + SC 
 
 Sur chaque fichier modifié et chaque page identifiée en section 3 :
 
-1. Confronter les critères NC de l'audit (colonne « Audit » de `criteres.md`, tableau par page de `audit-2025.md`) au code actuel. Trois issues possibles : **toujours présent** (finding, avec preuve), **corrigé** (le dire, une ligne), **non vérifiable statiquement** (à passer au runtime, section 5).
+1. Confronter les critères NC de l'audit (colonne « Audit » de `criteres.md`, tableau par page de `audit.md`) au code actuel. Trois issues possibles : **toujours présent** (finding, avec preuve), **corrigé** (le dire, une ligne), **non vérifiable statiquement** (à passer au runtime, section 5).
 2. Lancer les **sondes statiques** ci-dessous sur les fichiers concernés. Une sonde qui matche n'est pas un finding : ouvrir le code et qualifier.
 
 ```bash
@@ -129,8 +129,8 @@ grep -nE '\b(Open source|Data|Dashboard|Newsletter|Cookies?|Widget)\b' <fichiers
 
 - **A — Le nom accessible ≠ le libellé visible.** Un `aria-label` qui ne contient pas le texte affiché casse la commande vocale (WCAG 2.5.3). Vérifier chaque `aria-label`, `title`, `homeLinkProps`.
 - **B — L'`id` référencé.** Chaque `aria-labelledby`, `aria-describedby`, `aria-controls`, `htmlFor` doit pointer un `id` existant, unique, rendu **dans le même arbre DOM au même moment** (attention aux deux arbres desktop/mobile rendus en `display: none`, cf. `RechercheLayoutClient.tsx`). Préférer `useId()`.
-- **C — Le composant tiers fait-il vraiment le travail ?** `Autocomplete` MUI pose `role="combobox"` et `listbox`, mais un `renderGroup` personnalisé peut produire des `<li>` sans `role="option"` (finding 7.1 de l'audit sur l'accueil). Lire le DOM produit, pas la doc.
-- **D — Navigation client sans rechargement.** Après `router.push`, un filtre, une pagination ou une ouverture de panneau : où va le focus, le `<title>` change-t-il, le résultat est-il annoncé (`aria-live`) ? Défaut 12.8 transverse de l'audit.
+- **C — Le composant tiers fait-il vraiment le travail ?** `Autocomplete` MUI pose `role="combobox"` et `listbox`, mais un `renderGroup` personnalisé peut produire des `<li>` sans `role="option"` (finding 7.1 de l'audit sur l'accueil, encore NC en 10/2026). Lire le DOM produit, pas la doc.
+- **D — Navigation client sans rechargement.** Après `router.push`, un filtre, une pagination ou une ouverture de panneau : où va le focus, le `<title>` change-t-il, le résultat est-il annoncé (`aria-live`) ? 12.8 était NC sur 26 pages en 2025 et est conforme depuis la grille 10/2026 : toute régression coûte 1,64 pt.
 - **E — L'erreur de formulaire.** À la soumission en erreur : `aria-invalid` sur le champ, message lié par `aria-describedby`, focus déplacé sur le premier champ en erreur, format attendu indiqué **avant** la saisie. Formik ne fait rien de tout ça par défaut.
 - **F — Le contenu masqué.** `display: none`, `hidden`, `aria-hidden="true"` sur un contenu qui doit être lu ; `fr-sr-only` sur un contenu qui doit être vu. Un `aria-hidden` sur un élément focusable est une erreur bloquante.
 - **G — La couleur seule.** Onglet actif, filtre sélectionné, champ en erreur, badge de statut : un second indicateur (texte, icône, `aria-selected`, `aria-current`) est obligatoire.
@@ -187,14 +187,14 @@ Si la vérification est impossible : écrire « Incertain — vérification au r
 
 ### Points à gagner
 
-Méthode de la grille d'audit (`audit-2025.md`, section « Calcul du score ») :
-- Le **taux global** = critères C / (C + NC), tous critères NA exclus. Audit : 29 / 60 = **48,33 %**.
-- Un critère passe NC → C **uniquement** quand il ne reste aucune page de l'échantillon en NC sur ce critère. Chaque bascule vaut **+1,67 pt** (100 / 60).
-- Une correction sur une seule page ne fait pas bouger le taux global ; elle fait progresser le **taux moyen par page** (74,21 %) : +100 / (C + NC de la page) sur cette page, soit environ +2 pts sur la page, +0,08 pt sur la moyenne.
+Méthode de la grille d'audit (`audit.md`, section « Calcul du score ») :
+- Le **taux global** = critères C / (C + NC), tous critères NA exclus. Grille du 21/10/2026 : 50 / 61 = **81,97 %** (48,33 % en 11/2025).
+- Un critère passe NC → C **uniquement** quand il ne reste aucune page de l'échantillon en NC sur ce critère. Chaque bascule vaut **+1,64 pt** (100 / 61).
+- Une correction sur une seule page ne fait pas bouger le taux global ; elle fait progresser le **taux moyen par page** (89,81 %) : +100 / (C + NC de la page) sur cette page, soit environ +2 pts sur la page, +0,08 pt sur la moyenne.
 
-Pour chaque finding, indiquer donc : statut audit du critère (C / NC / NA), pages de l'échantillon encore NC, si la correction proposée **fait basculer le critère** (toutes les pages NC couvertes) et le gain correspondant. Si le critère est C dans l'audit, la correction évite une **régression de −1,67 pt** : le dire ainsi. Si le critère est NA dans l'audit et devient applicable (nouvelle vidéo, nouvel iframe), le dire : il entre au dénominateur.
+Pour chaque finding, indiquer donc : statut audit du critère (C / NC / NA), pages de l'échantillon encore NC, si la correction proposée **fait basculer le critère** (toutes les pages NC couvertes) et le gain correspondant. Si le critère est C dans l'audit, la correction évite une **régression de −1,64 pt** : le dire ainsi. Si le critère est NA dans l'audit et devient applicable (nouvelle vidéo, nouvel iframe), le dire : il entre au dénominateur.
 
-Ces chiffres se rapportent à l'échantillon de 27 pages du 25/11/2025. Signaler quand une page touchée n'en fait pas partie : le gain est alors « hors échantillon, non chiffrable ».
+Ces chiffres se rapportent à l'échantillon de 27 pages de la grille du 21/10/2026. Signaler quand une page touchée n'en fait pas partie : le gain est alors « hors échantillon, non chiffrable ».
 
 ### Format de restitution (mode autonome)
 
@@ -245,5 +245,5 @@ Terminer par un `AskUserQuestion` : appliquer les corrections (toutes ou une sé
 - Justifier chaque finding par le critère, la preuve et l'impact. Proposer une correction concrète en React, jamais en HTML abstrait quand un composant DSFR ou MUI existe.
 - Ne pas inventer de problème. Un thème sans objet se dit en un mot. Une revue sans finding se dit en une ligne, avec la liste des critères vérifiés.
 - Distinguer toujours ce qui vient du diff (objectif 1, bloque la PR si Bloquant) de ce qui préexiste (objectif 2, dette chiffrée, jamais bloquant pour la PR).
-- Les chiffres de points s'appuient sur la grille du 25/11/2025 : les citer comme tels, signaler toute page hors échantillon.
+- Les chiffres de points s'appuient sur la grille du 21/10/2026 : les citer comme tels, signaler toute page hors échantillon.
 - Aucune mention de Claude, d'IA ou d'outil de génération dans un texte destiné à la PR.
