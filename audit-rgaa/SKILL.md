@@ -62,7 +62,7 @@ Ne rien supposer du repo : le skill tourne sur LBA, BAL, api-apprentissage ou un
 
 Écrire l'inventaire dans le scratchpad (`inventaire.md` : racine, stack, nombre de pages, nombre de composants, liste des routes). Le rapport y renvoie.
 
-**Contexte LBA** : si le repo est `labonnealternance`, charger `~/.claude/skills/review-rgaa/references/audit-2025.md` : statut du critère dans l'audit du 25/11/2025, pages NC, correspondance pages ↔ routes, méthode de calcul des points. Le rapport indique alors ce que l'audit a relevé, ce qui est corrigé, ce qui reste, et le gain si le critère bascule (+1,67 pt par critère). Si ce fichier est absent (skill `review-rgaa` non installé), l'écrire en tête du rapport et omettre les colonnes Audit et Gain plutôt que de les estimer. Pour un autre repo, cette section n'existe pas : ne pas l'inventer.
+**Contexte LBA** : si le repo est `labonnealternance`, charger `~/.claude/skills/review-rgaa/references/audit.md` : statut du critère dans la grille du 21/10/2026, pages NC, correspondance pages ↔ routes, méthode de calcul des points. Le rapport indique alors ce que la grille relève, ce qui est corrigé, ce qui reste, et le gain si le critère bascule (+1,64 pt par critère) ou la perte si un critère C régresse (−1,64 pt). Si ce fichier est absent (skill `review-rgaa` non installé), l'écrire en tête du rapport et omettre les colonnes Audit et Gain plutôt que de les estimer. Pour un autre repo, cette section n'existe pas : ne pas l'inventer.
 
 ---
 
@@ -131,7 +131,7 @@ Structure, par critère audité :
 ## Critère 1.1 — Chaque image porteuse d'information a-t-elle une alternative textuelle ?
 Verdict : Non conforme   Sévérité max : Bloquant
 Couverture : 312 fichiers scannés · 87 candidats · 79 conformes · 6 anomalies · 2 à vérifier au runtime
-Audit 11/2025 (LBA) : NC sur P23 · reste NC (1 anomalie sur P23) · bascule si A1 et A4 corrigées : +1,67 pt
+Audit 10/2026 (LBA) : C (NC sur P23 en 11/2025, corrigé depuis) · A1 et A4 sont des régressions : −1,64 pt si non corrigées
 ```
 
 Puis :
@@ -165,5 +165,5 @@ Sur demande uniquement. Corriger par numéro, à la source quand c'est possible,
 - Une sonde de détection qui ne retourne aucune ligne est une absence à prouver, pas une conformité : relancer la sonde seule, sans pipe, afficher stderr (code 2 = sonde en erreur), puis la contre-sonde de forme différente. Un verdict Conforme sur zéro candidat sans contre-sonde n'est pas recevable.
 - Les comptes bouclent : conformes + anomalies + à vérifier au runtime = candidats, pour chaque critère.
 - Distinguer toujours statique et runtime. Ce qui n'a pas été rendu n'est pas « conforme », il est « conforme sur le code statique » ou « à vérifier ».
-- Les chiffres de points ne concernent que LBA et l'échantillon du 25/11/2025 : les citer comme tels, jamais pour un autre repo.
+- Les chiffres de points ne concernent que LBA et la grille du 21/10/2026 : les citer comme tels, jamais pour un autre repo.
 - Aucune mention de Claude, d'IA ou d'outil de génération dans un rapport destiné à être partagé.

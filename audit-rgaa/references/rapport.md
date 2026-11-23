@@ -10,14 +10,14 @@ Fichier : `rapport-rgaa-<critères>-<AAAA-MM-JJ>.md` dans le scratchpad. Le mêm
 - Inventaire : <n> pages (`page.tsx`), <n> layouts, <n> composants scannés — détail dans `inventaire.md`
 - Méthode : sondes statiques de `sondes.md` sur toute la racine UI, qualification manuelle de chaque candidat ; runtime <exécuté sur n routes | non exécuté>
 - Exclusions : tests, e2e, stories, scripts ; contenu externe (<Notion, Markdown…>) audité via son transformateur uniquement
-- Référence (LBA uniquement) : audit Audit-Web du 25/11/2025, 27 pages, taux 48,33 %
+- Référence (LBA uniquement) : grille DGEFP du 21/10/2026, 27 pages, taux 81,97 % (48,33 % à l'audit Audit-Web du 25/11/2025)
 
 ## Récapitulatif
 
-| Critère | Verdict | Candidats | Anomalies (B/M/m) | Runtime | Audit 11/2025 → après correction | Gain |
+| Critère | Verdict | Candidats | Anomalies (B/M/m) | Runtime | Audit 10/2026 → après correction | Gain |
 |---|---|---|---|---|---|---|
-| 1.1 | Non conforme | 87 | 6 (2/4/0) | 2 | NC (P23) → C si A1, A4 | +1,67 |
-| 1.2 | Conforme sur le code statique | 44 | 0 | 3 | NC (P05, P14–P17) → C | +1,67 |
+| 1.1 | Non conforme | 87 | 6 (2/4/0) | 2 | C → NC si A1, A4 non corrigées | −1,64 |
+| 9.3 | Conforme sur le code statique | 44 | 0 | 3 | NC (P05, P15–P17) → C | +1,64 |
 | 1.4 | Non applicable | 0 | — | — | NA | — |
 
 Gain total si toutes les anomalies sont corrigées : +X,XX pt sur le taux global (n critères basculent). <Omettre la colonne et la ligne hors LBA.>
@@ -25,7 +25,7 @@ Gain total si toutes les anomalies sont corrigées : +X,XX pt sur le taux global
 ## Critère 1.1 — <énoncé exact du RGAA>
 Verdict : <Conforme | Conforme sur le code statique | Non conforme | Non applicable | Non vérifiable statiquement>   Sévérité max : <B/M/m>
 Couverture : <n> fichiers scannés · <n> candidats · <n> conformes · <n> anomalies · <n> à vérifier au runtime
-Audit 11/2025 : <statut, pages NC ; ce qui est corrigé depuis ; ce qui reste ; bascule si …> <LBA uniquement>
+Audit 10/2026 : <statut, pages NC ; ce qui est corrigé depuis ; ce qui reste ; bascule si … ou régression si …> <LBA uniquement>
 
 ### Anomalies
 **A1 — `chemin/fichier.tsx:42`** (aussi `autre.tsx:17`, `…`) · Sévérité : <B/M/m>
@@ -67,5 +67,5 @@ Règles de rédaction :
 - Les verdicts « Conforme » portent la couverture chiffrée ; « sur le code statique » dès qu'un point runtime reste.
 - Les comptes bouclent : conformes + anomalies + à vérifier au runtime = candidats. Un écart signale des candidats non qualifiés.
 - Un « Conforme » sur zéro candidat cite la sonde et sa contre-sonde, comme un « Non applicable ».
-- Les colonnes Audit et Gain n'existent que pour La bonne alternance, sur l'échantillon du 25/11/2025 ; les chiffres viennent de `review-rgaa/references/audit-2025.md`.
+- Les colonnes Audit et Gain n'existent que pour La bonne alternance, sur l'échantillon de la grille du 21/10/2026 ; les chiffres viennent de `review-rgaa/references/audit.md`.
 - Phrases courtes, pas de tiret cadratin, pas d'emoji, français.
