@@ -16,7 +16,7 @@ Audit mensuel de sécurité sur les 3 repos GitHub de Mission Nationale Apprenti
 | `mission-apprentissage/api-apprentissage` | Yarn Berry |
 
 **Dossier parent des clones locaux** : demander à l'utilisateur au démarrage :
-> "Dans quel dossier se trouvent tes clones locaux des repos MNA ? (ex: `~/Documents/projets/beta`)"
+> "Dans quel dossier se trouvent tes clones locaux des repos MNA ? (ex: `~/code/mission-apprentissage`)"
 
 Utiliser ce chemin comme `<BASE_DIR>` pour toute la session. Si un repo est absent à cet emplacement, le cloner dans `/tmp/mna-audit-<REPO>`.
 
@@ -150,12 +150,12 @@ pnpm why <package>   # pnpm
 
 ```bash
 git add package.json <workspace>/package.json yarn.lock  # ou les fichiers modifiés
-git commit -m "fix(security-audit-<ISSUE>): corriger <N> CVE critiques (<liste des packages>)"
+git commit -m "fix: corrige <N> CVE critiques (<liste des packages>)"
 git push -u origin fix/security-audit-<ISSUE>
 ```
 
 **Règles de commit impératives :**
-- Format conventional commit : `fix(security-audit-<ISSUE>): <description en minuscules>`
+- Format conventional commit : `fix: <description en minuscules>`, sans numéro d'issue en scope (le scope désigne un workspace)
 - Ne jamais ajouter de référence à Claude, co-authored-by ou mention d'IA
 - Ne jamais utiliser `--no-verify`
 - Si un hook échoue, diagnostiquer et corriger avant de recréer le commit
@@ -164,14 +164,15 @@ git push -u origin fix/security-audit-<ISSUE>
 
 ## Étape 6 — Créer la PR GitHub
 
-**Labels par repo :**
-- `api-apprentissage` → ajouter `--label "dependencies"`
-- `bal`, `labonnealternance` → pas de label spécifique
+L'issue de suivi est dans `labonnealternance` :
+
+- **labonnealternance** : titre `fix: corrige <N> CVE critiques (<packages>) (#<ISSUE>)`, body `Fixes #<ISSUE>`
+- **bal**, **api-apprentissage** : titre sans suffixe, body `Fixes mission-apprentissage/labonnealternance#<ISSUE>` (un `#<ISSUE>` nu pointerait vers une issue du repo courant)
+- **api-apprentissage** : ajouter `--label "dependencies"`
 
 ```bash
 gh pr create \
-  --title "fix(security-audit-<ISSUE>): corriger <N> CVE critiques (<packages>)" \
-  --label "dependencies" \   # api-apprentissage uniquement
+  --title "fix: corrige <N> CVE critiques (<packages>) (#<ISSUE>)" \
   --body "$(cat <<'EOF'
 Fixes #<ISSUE>
 
