@@ -3,16 +3,26 @@
 Conventions : `$UI_ROOT` = racine UI détectée (section 2 du skill). Toutes les commandes excluent les dossiers non pertinents :
 
 ```bash
-G() { grep -rnE "$1" "$UI_ROOT" --include='*.tsx' --include='*.jsx' ${2:-} \
-  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out --exclude-dir=dist --exclude-dir=coverage \
-  --exclude-dir=e2e --exclude-dir=tests --exclude-dir=__tests__ --exclude='*.test.*' --exclude='*.stories.*'; }
-# usage : G 'motif'            → TSX/JSX
-#         G 'motif' "--include=*.css --include=*.scss"   → ajouter les styles
+GX=(--include='*.tsx' --include='*.jsx' --include='*.ts'
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out --exclude-dir=dist --exclude-dir=coverage
+  --exclude-dir=e2e --exclude-dir=tests --exclude-dir=__tests__ --exclude-dir=scripts
+  --exclude='*.test.*' --exclude='*.stories.*' --exclude='*.d.ts')
+G()  { local pat=$1; shift; grep -rnE "$pat" "$UI_ROOT" "${GX[@]}" "$@"; }
+GO() { local pat=$1; shift; grep -rhoE "$pat" "$UI_ROOT" "${GX[@]}" "$@"; }
+GP() { grep -P '' /dev/null 2>/dev/null; [ $? -eq 2 ] && { echo "GP : grep -P indisponible, sonde non exécutée" >&2; return 2; }
+       local pat=$1; shift; grep -rnP "$pat" "$UI_ROOT" "${GX[@]}" "$@"; }
+# usage : G 'motif'                                     → TSX / JSX / TS
+#         G 'motif' --include='*.css' --include='*.scss'  → ajouter les styles
+#         G 'motif' -i -A3                               → options grep après le motif, une par argument
+#         GO 'motif' | sort | uniq -c                    → compter des doublons (texte seul, sans fichier ni ligne)
+#         GP '[\x{0590}-\x{06FF}]'                       → plages Unicode, PCRE (absent du grep BSD de macOS)
 ```
+
+Fonctionne sous bash et zsh : les options passent par `"$@"` et un tableau, jamais par une chaîne non quotée (zsh ne la découpe pas). Les motifs de `G` sont en ERE : pas de lookahead `(?!…)`, pas de `\x{…}`, qui font sortir `grep -E` en erreur. Ne jamais compter des doublons avec `G` : son `-n` rend chaque ligne unique, utiliser `GO`. `GP` exige une locale UTF-8 (sinon `grep -P` refuse les points de code au-delà de `\xFF`).
 
 Pour chaque critère : **Inventaire** (le critère est-il applicable ?), **Détection** (candidats), **Qualification** (anomalie / conforme / runtime), **Correction type**. `S` = décidable statiquement, `R` = rendu requis. Les variantes de bibliothèque ne s'appliquent que si la bibliothèque est dans la stack détectée.
 
-Deux recherches de forme différente sont nécessaires avant de conclure à une absence.
+**Sonde vide** : zéro ligne n'est pas une conformité, c'est une absence à prouver. Relancer la sonde seule, sans pipe, et lire stderr : code retour 2 = sonde en erreur (motif refusé, option mal passée), 1 = vraiment aucune ligne. Puis lancer une contre-sonde de forme différente (motif plus large, autre attribut, autre extension). Deux recherches de forme différente sont nécessaires avant de conclure à une absence.
 
 ---
 
@@ -26,7 +36,7 @@ Qualification : `alt` absent sur une image qui porte une information non répét
 Correction : `alt="texte de l'image"` ; `<svg role="img" aria-label="…">` ; `Button` DSFR icône avec `title`.
 
 ### 1.2 Images de décoration ignorées (S)
-Détection : `G '<(img|Image)\b[^>]*alt="[^"]+"'` à confronter au texte voisin (redite = décorative) · `G '<svg\b' | grep -v 'aria-hidden="true"'` · `G 'fr-icon-|ri-[a-z0-9-]+-(line|fill)' | grep -vE 'aria-hidden|Button|iconId|title='` (icône DSFR posée à la main sur un `span` / `Box` / `Typography` à côté d'un texte) · émojis : `G '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' | grep -v aria-hidden` (grep -P si nécessaire).
+Détection : `G '<(img|Image)\b[^>]*alt="[^"]+"'` à confronter au texte voisin (redite = décorative) · `G '<svg\b' | grep -v 'aria-hidden="true"'` · `G 'fr-icon-|ri-[a-z0-9-]+-(line|fill)' | grep -vE 'aria-hidden|Button|iconId|title='` (icône DSFR posée à la main sur un `span` / `Box` / `Typography` à côté d'un texte) · émojis : `GP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' | grep -v aria-hidden` (si `GP` est indisponible, le noter dans « Zones non couvertes »).
 Qualification : svg ou icône décorative sans `aria-hidden="true"` = anomalie Majeur. `<img alt="Logo">` à côté du nom écrit = anomalie Mineur (redite). `focusable="false"` recommandé sur svg pour IE/Edge ancien, pas exigé.
 Correction : `aria-hidden="true"` (+ `focusable="false"` sur svg) ; `alt=""`.
 
@@ -35,7 +45,7 @@ Détection : `G 'alt="[^"]*"' | grep -iE 'alt="(image|img|photo|logo|icon|icône
 Qualification : `alt` générique, nom de fichier, ou différent du texte porté par l'image = anomalie Majeur. Logo cliquable : `alt` = destination (« Accueil - Nom du site »).
 
 ### 1.4 / 1.5 CAPTCHA (S)
-Inventaire : `G -i 'captcha|hcaptcha|recaptcha|turnstile'`. Absent → NA. Présent : `alt` décrivant la nature (1.4), alternative non visuelle (1.5), sinon Bloquant.
+Inventaire : `G 'captcha|hcaptcha|recaptcha|turnstile' -i`. Absent → NA. Présent : `alt` décrivant la nature (1.4), alternative non visuelle (1.5), sinon Bloquant.
 
 ### 1.6 / 1.7 Description détaillée (S)
 Inventaire : graphiques et infographies : `G 'recharts|chart\.js|Chart\b|<Bar|<Line|<Pie|nivo|d3|<canvas|infographie|graphique'`. Absent → NA. Présent : `aria-describedby`, texte adjacent ou tableau équivalent contenant les données ; sinon Majeur.
@@ -48,14 +58,14 @@ Détection : `G '<figcaption|<figure|legend|légende|caption'` autour d'images. 
 
 ## Thème 2 — Cadres
 
-**Inventaire** : `G '<iframe\b'` · `G 'iframe' "--include=*.ts --include=*.html"` (widget embarqué, éditorial). Aucun → NA.
+**Inventaire** : `G '<iframe\b'` · `G 'iframe' --include='*.html'` (widget embarqué, éditorial). Aucun → NA.
 
 ### 2.1 / 2.2 Titre de cadre présent et pertinent (S)
 Détection : `G '<iframe\b' | grep -v 'title='`. Sans `title` → Bloquant ; `title` générique (« iframe », « frame », URL) → Majeur.
 
 ## Thème 3 — Couleurs
 
-**Inventaire** : toujours applicable. Sources de couleur : `G 'color:|backgroundColor|background:|bgcolor|fill=|stroke=' "--include=*.css --include=*.scss"` · hex en dur : `G '#[0-9a-fA-F]{3,8}\b'` · tokens : `G 'fr\.colors\.'` · `sx=\{\{[^}]*color`.
+**Inventaire** : toujours applicable. Sources de couleur : `G 'color:|backgroundColor|background:|bgcolor|fill=|stroke=' --include='*.css' --include='*.scss'` · hex en dur : `G '#[0-9a-fA-F]{3,8}\b'` · tokens : `G 'fr\.colors\.'` · `sx=\{\{[^}]*color`.
 
 ### 3.1 Information par la couleur seule (S+R)
 Détection : états visuels conditionnels : `G '(color|backgroundColor|borderColor|bgcolor)\s*[:=]\s*[^,}]*\?' ` · `G 'severity=|variant="(success|error|warning|info)"|Badge\b|Chip\b|isActive|selected|isSelected|hasError|error\s*\?'`.
@@ -72,8 +82,8 @@ Détection : bordures de champs, indicateurs de focus, icônes informatives, fon
 
 ## Thème 4 — Multimédia
 
-**Inventaire** : `G '<(video|audio|track|source)\b|ReactPlayer|youtube|vimeo|dailymotion|player|\.mp4|\.mp3|\.webm|autoplay|Leaflet|MapContainer|mapbox|maplibre'`. Aucun → thème NA (état LBA au 11/2025).
-Présent : 4.1/4.2 transcription ou audiodescription (`href` vers un texte, `<details>`), 4.3/4.4 `<track kind="captions">`, 4.7 texte adjacent identifiant le média, 4.10 pas d'`autoPlay` sonore sans contrôle, 4.11/4.12 contrôles natifs (`controls`) ou lecteur accessible au clavier, 4.13 rôle et nom du lecteur. Carte interactive = média non temporel : alternative textuelle (liste des lieux) et contrôle clavier. Sévérité : Bloquant pour 4.1, 4.3, 4.11 ; Majeur sinon.
+**Inventaire** : `G '<(video|audio|track|source)\b|ReactPlayer|youtube|vimeo|dailymotion|player|\.mp4|\.mp3|\.webm|autoplay|Leaflet|MapContainer|mapbox|maplibre'`, contre-sonde `G 'iframe|embed' -i` (lecteur embarqué). Aucun → thème NA.
+Présent : 4.1/4.2 transcription ou audiodescription (`href` vers un texte, `<details>`), 4.3/4.4 `<track kind="captions">`, 4.5/4.6 audiodescription synchronisée : `G '<track\b' | grep 'kind="descriptions"'` ou lien vers une version audiodécrite, à exiger dès que la vidéo porte une information seulement visuelle, pertinence à la lecture, 4.7 texte adjacent identifiant le média, 4.8/4.9 média non temporel (carte, SVG ou `canvas` interactif) : `G '<(MapContainer|canvas)\b|Leaflet|mapbox|maplibre'` puis une alternative adjacente (liste, tableau, lien vers une page équivalente) qui donne la même information, 4.10 pas d'`autoPlay` sonore sans contrôle, 4.11/4.12 contrôles natifs (`controls`) ou lecteur accessible au clavier, 4.13 rôle et nom du lecteur. Carte interactive = média non temporel : alternative textuelle (liste des lieux) et contrôle clavier. Sévérité : Bloquant pour 4.1, 4.3, 4.11 ; Majeur sinon.
 
 ## Thème 5 — Tableaux
 
@@ -139,7 +149,7 @@ Correction : composant `<div role="status" className="fr-sr-only">{message}</div
 ## Thème 8 — Éléments obligatoires
 
 ### 8.1 / 8.2 Doctype et validité (S+R)
-Détection : `id` en dur potentiellement dupliqués : `G 'id="[a-z][a-z0-9_-]*"' -o | sort | uniq -c | sort -rn | awk '$1>1'` (puis vérifier s'ils peuvent coexister dans une page, notamment desktop + mobile) · imbrications interdites : `G '<(button|Button)\b' -A3 | grep -E '<(a|Link|NextLink)\b'` et l'inverse · `<Typography>` (rend `<p>`) contenant `<Box>`, `<div>`, `<Typography>` bloc, `<ul>` : `G '<Typography\b(?![^>]*component=)' -A3 | grep -E '<(Box|div|ul|ol|Typography|Stack|Grid)\b'` · `<li>` hors liste · attributs ARIA sur un élément qui ne les admet pas (`aria-label` sur `div`/`span` sans rôle : `G '<(div|span|Box|Typography|Stack)\b[^>]*aria-label' | grep -v 'role='`).
+Détection : `id` en dur potentiellement dupliqués : `GO 'id="[a-z][a-z0-9_-]*"' | sort | uniq -c | sort -rn | awk '$1>1'` (puis vérifier s'ils peuvent coexister dans une page, notamment desktop + mobile) · imbrications interdites : `G '<(button|Button)\b' -A3 | grep -E '<(a|Link|NextLink)\b'` et l'inverse · `<Typography>` (rend `<p>`) contenant `<Box>`, `<div>`, `<Typography>` bloc, `<ul>` : `G '<Typography\b' -A3 | grep -E -- '-[0-9]+-[[:space:]]*<(Box|div|ul|ol|Typography|Stack|Grid)\b'` (lignes de contexte seules ; écarter à la lecture les parents qui portent un `component=` autre que `p`) · `<li>` hors liste · attributs ARIA sur un élément qui ne les admet pas (`aria-label` sur `div`/`span` sans rôle : `G '<(div|span|Box|Typography|Stack)\b[^>]*aria-label' | grep -v 'role='`).
 Qualification : `id` dupliqué rendu simultanément → Majeur ; imbrication interactive → Majeur (double arrêt de tabulation, cf. 12.8) ; `div` dans `p` → Majeur ; `aria-label` sur générique → Mineur (ignoré par les lecteurs d'écran, souvent une fausse impression de conformité).
 
 ### 8.3 / 8.4 Langue par défaut (S)
@@ -147,7 +157,7 @@ Détection : `G '<html\b' | grep -v 'lang='` · `G 'lang="[a-z]{2}(-[A-Z]{2})?"'
 Sévérité : absent → Bloquant ; faux → Majeur.
 
 ### 8.5 / 8.6 Titre de page (S+R)
-Détection : chaque `page.tsx` a `metadata`, `generateMetadata` ou hérite d'un `layout` avec `title` : `for p in $(find $UI_ROOT/app -name page.tsx); do grep -lE 'metadata|generateMetadata' "$p" >/dev/null || echo "sans metadata: $p"; done` puis vérifier le `layout.tsx` parent · `G '<title>'` dans des composants clients (double `<title>`) · titres génériques ou identiques : `G 'title:\s*"[^"]*"' -oh | sort | uniq -c | sort -rn | awk '$1>1'`.
+Détection : chaque `page.tsx` a `metadata`, `generateMetadata` ou hérite d'un `layout` avec `title` : `find "$UI_ROOT/app" -name page.tsx -exec grep -LE 'metadata|generateMetadata' {} +` puis vérifier le `layout.tsx` parent · `G '<title>'` dans des composants clients (double `<title>`) · titres génériques ou identiques : `GO 'title:\s*"[^"]*"' | sort | uniq -c | sort -rn | awk '$1>1'` (le registre des titres est souvent un `.ts`, LBA : `ui/utils/routes.metadata.utils.ts`).
 Qualification : page sans `<title>` → Bloquant (8.5) ; titre identique sur plusieurs pages, sans le nom de la page ou sans le nom du site → Majeur (8.6) ; deux `<title>` rendus → Majeur (8.6). Format attendu : « Nom de la page - Nom du site ».
 
 ### 8.7 / 8.8 Changements de langue (S)
@@ -159,12 +169,12 @@ Détection : `G '<Typography\b[^>]*variant="h[1-6]"' | grep -v 'component='` (re
 Qualification : titre sémantique sans fonction de titre → Majeur ; `<br><br>`, `<p>` vide, `<hr>` décoratif non masqué → Mineur ; `<h1>` dupliqué (desktop / mobile) → Mineur.
 
 ### 8.10 Sens de lecture (S)
-Détection : `G 'dir="rtl"|[\x{0590}-\x{06FF}]'`. Absent → NA.
+Détection : `G 'dir="rtl"'` · texte hébreu ou arabe : `GP '[\x{0590}-\x{06FF}]'`. Les deux vides → NA. `GP` indisponible : NA « sur `dir` seul », à écrire tel quel dans le rapport.
 
 ## Thème 9 — Structuration
 
 ### 9.1 Titres (S+R)
-Détection : titres simulés (gras **et** taille ≥ 18 px, ou classe de titre DSFR, sans balise de titre) : `G '<Typography\b[^>]*((fontWeight[:=]\s*"?(700|bold)[^>]*fontSize[:=]\s*"?(1[89]|[2-9][0-9])px)|(fontSize[:=]\s*"?(1[89]|[2-9][0-9])px[^>]*fontWeight[:=]\s*"?(700|bold))|fr-h[1-6]|fr-text--lead)' | grep -vE 'component="h|variant="h'` (48 candidats sur LBA au 09/2026 ; ne voit que les `sx` écrits sur une ligne : compléter par `G '<Typography\b' -A3 | grep -E 'fontWeight[:=]\s*"?(700|bold)'` puis lecture) · `G '<(p|span|div|Box)\b[^>]*(fr-h[1-6]|fr-text--lead)'` · `variant="hN"` sans `component` rend un `<hN>` : `G '<Typography\b[^>]*variant="h[1-6]"' | grep -v 'component='` → vrai titre au bon niveau, ou style seul (alors 8.9) · hiérarchie : lister par page les `component="hN"`, `variant="hN"`, `<hN` et les `titleAs` d'accordéons ; un seul `h1` par page, pas de saut de niveau · `Accordion` DSFR : `G '<Accordion\b' | grep -v titleAs` (défaut `h3` : cohérent ?) · footer / header : `fr-footer__top-cat` en `h3` sans `h2`.
+Détection : titres simulés (gras **et** taille ≥ 18 px, ou classe de titre DSFR, sans balise de titre) : `G '<Typography\b[^>]*((fontWeight[:=]\s*"?(700|bold)[^>]*fontSize[:=]\s*"?(1[89]|[2-9][0-9])px)|(fontSize[:=]\s*"?(1[89]|[2-9][0-9])px[^>]*fontWeight[:=]\s*"?(700|bold))|fr-h[1-6]|fr-text--lead)' | grep -vE 'component="h|variant="h'` (ne voit que les `sx` écrits sur une ligne : compléter par `G '<Typography\b' -A3 | grep -E 'fontWeight[:=]\s*"?(700|bold)'` puis lecture) · `G '<(p|span|div|Box)\b[^>]*(fr-h[1-6]|fr-text--lead)'` · `variant="hN"` sans `component` rend un `<hN>` : `G '<Typography\b[^>]*variant="h[1-6]"' | grep -v 'component='` → vrai titre au bon niveau, ou style seul (alors 8.9) · hiérarchie : lister par page les `component="hN"`, `variant="hN"`, `<hN` et les `titleAs` d'accordéons ; un seul `h1` par page, pas de saut de niveau · `Accordion` DSFR : `G '<Accordion\b' | grep -v titleAs` (défaut `h3` : cohérent ?) · footer / header : `fr-footer__top-cat` en `h3` sans `h2`.
 Qualification : titre visuel sans balise de titre → Majeur ; page sans `h1` → Majeur ; saut de niveau ou `h1` multiple → Majeur ; hiérarchie à confirmer au runtime pour les pages composées.
 Correction : `<Typography variant="…" component="hN">` ; `titleAs`.
 
@@ -185,7 +195,7 @@ Détection : `G 'citation|témoignage|«|»|"[^"]{40,}"' -i | grep -vE '<q\b|<bl
 Détection : `G '<(center|font|big|blink|marquee|u)\b|\s(align|bgcolor|border|valign|cellpadding|cellspacing)="'`. Présent → Mineur.
 
 ### 10.2 / 10.3 Contenu présent et compréhensible sans CSS (S)
-Détection 10.2 : icônes CSS porteuses de sens sans équivalent texte : sondes 1.1 (icônes seules) + `G 'target="_blank"' | grep -vE 'title=|fr-sr-only|nouvelle fenêtre'` (l'icône « lien externe » du DSFR est en `::before`) + `G 'content:\s*"' "--include=*.css --include=*.scss"` (texte généré en CSS) + `G 'background(-image)?:' "--include=*.css --include=*.scss"` sur des éléments informatifs.
+Détection 10.2 : icônes CSS porteuses de sens sans équivalent texte : sondes 1.1 (icônes seules) + `G 'target="_blank"' | grep -vE 'title=|fr-sr-only|nouvelle fenêtre'` (l'icône « lien externe » du DSFR est en `::before`) + `G 'content:\s*"' --include='*.css' --include='*.scss'` (texte généré en CSS) + `G 'background(-image)?:' --include='*.css' --include='*.scss'` sur des éléments informatifs.
 Détection 10.3 : ordre du DOM ≠ ordre visuel : `G 'order:\s*[0-9]|flexDirection:\s*"(row|column)-reverse"|gridRowStart|gridRow:|position:\s*"?absolute'` · blocs déplacés par `Grid` avec `order`.
 Qualification 10.2 : information portée seulement par un pseudo-élément ou une image de fond → Majeur (Bloquant si c'est le seul vecteur : bouton icône). 10.3 : ordre DOM incohérent avec la lecture → Majeur (souvent runtime).
 
@@ -200,7 +210,7 @@ Détection : `G 'underline="none"|textDecoration:\s*"?none|text-decoration:\s*no
 Qualification : lien distingué par la couleur seule, ratio lien/texte < 3:1 ou pas d'indicateur au survol/focus → Majeur.
 
 ### 10.7 Focus visible (S+R)
-Détection : `G 'outline:\s*"?(none|0)|outline-?[wW]idth:\s*"?0|boxShadow:\s*"?none.*focus|:focus\s*\{[^}]*outline:\s*(none|0)' "--include=*.css --include=*.scss"` sans `:focus-visible` de remplacement dans le même fichier · `G 'disableFocusRipple|disableRipple'` (indicateur MUI supprimé sans outline) · styles Notion / Markdown (`notion.css`) écrasant l'outline des liens.
+Détection : `G 'outline:\s*"?(none|0)|outline-?[wW]idth:\s*"?0|boxShadow:\s*"?none.*focus|:focus\s*\{[^}]*outline:\s*(none|0)' --include='*.css' --include='*.scss'` sans `:focus-visible` de remplacement dans le même fichier · `G 'disableFocusRipple|disableRipple'` (indicateur MUI supprimé sans outline) · styles Notion / Markdown (`notion.css`) écrasant l'outline des liens.
 Qualification : outline supprimé sans remplacement visible → Bloquant. Confirmer au runtime avec Tab + screenshot.
 
 ### 10.8 Contenus cachés (S)
@@ -208,7 +218,7 @@ Détection : `G 'aria-hidden="true"' -A3 | grep -E '<(a|button|Button|input|sele
 Qualification : `aria-hidden` sur un élément focusable ou contenant du focus → Bloquant ; contenu utile en `display: none` → Majeur.
 
 ### 10.9 / 10.10 Forme, taille, position (S)
-Détection : `G -i '(à|a) (droite|gauche)|en haut|en bas|ci-dessous|ci-dessus|le bouton (rond|vert|rouge|bleu)|en (rouge|vert|bleu|gras)'` dans des consignes. Consigne qui ne repose que sur la position, la forme ou la couleur → Majeur.
+Détection : `G '(à|a) (droite|gauche)|en haut|en bas|ci-dessous|ci-dessus|le bouton (rond|vert|rouge|bleu)|en (rouge|vert|bleu|gras)' -i` dans des consignes. Consigne qui ne repose que sur la position, la forme ou la couleur → Majeur.
 
 ### 10.11 Reflow 320 px (R, S pour les causes)
 Détection : `G 'minWidth:\s*"?[4-9][0-9]{2}px|min-width:\s*[4-9][0-9]{2}px|width:\s*"?[6-9][0-9]{2}px|overflowX:\s*"?(scroll|auto)'`. Largeur fixe > 320 px hors tableaux et cartes → à confirmer au runtime avec `resize_window` mobile.
@@ -221,7 +231,7 @@ Détection : `G '<Tooltip\b' -A6` (déclencheur focusable ? `disableInteractive`
 Qualification : contenu au survol non fermable au clavier, disparaissant quand le pointeur le survole, ou lié à un déclencheur non focusable → Majeur (+ 7.3 Bloquant si non atteignable).
 
 ### 10.14 Contenus CSS-only au survol (S)
-Détection : `G ':hover\s*\{' "--include=*.css --include=*.scss" -A4 | grep -E 'display:\s*(block|flex)|visibility:\s*visible|opacity:\s*1'` puis vérifier qu'une règle `:focus-within` ou `:focus` équivalente existe · `sx` : `G '&:hover' -A3 | grep -E 'display|visibility|opacity'`.
+Détection : `G ':hover\s*\{' --include='*.css' --include='*.scss' -A4 | grep -E 'display:\s*(block|flex)|visibility:\s*visible|opacity:\s*1'` puis vérifier qu'une règle `:focus-within` ou `:focus` équivalente existe · `sx` : `G '&:hover' -A3 | grep -E 'display|visibility|opacity'`.
 Qualification : contenu révélé au `:hover` sans équivalent focus → Bloquant.
 
 ## Thème 11 — Formulaires
@@ -230,7 +240,9 @@ Qualification : contenu révélé au `:hover` sans équivalent focus → Bloquan
 
 ### 11.1 Étiquette (S+R)
 Détection par bibliothèque :
-- HTML natif : `G '<(input|select|textarea)\b' | grep -vE 'type="(hidden|submit|button|reset)"|aria-label|aria-labelledby|title=|id='` → puis, pour ceux avec `id`, vérifier qu'un `htmlFor` identique existe dans le même composant.
+- HTML natif, deux sondes :
+  - sans aucun nom : `G '<(input|select|textarea)\b' | grep -vE 'type="(hidden|submit|button|reset)"|aria-label|aria-labelledby|title=|id='` (attributs sur plusieurs lignes : relire avec `-A5`) ;
+  - `id` à apparier : `G '<(input|select|textarea)\b[^>]*\bid=' | grep -vE 'type="(hidden|submit|button|reset)"|aria-label|aria-labelledby'` → pour chacun, un `htmlFor` de même valeur dans le même composant (`grep -n 'htmlFor' <fichier>`).
 - MUI : `G '<(Input|OutlinedInput|InputBase|NativeSelect|Select|TextareaAutosize|Checkbox|Radio|Switch)\b' | grep -vE 'aria-label|aria-labelledby|id='` · `G '<FormLabel\b' | grep -v htmlFor` · `G '<FormControlLabel\b' -A4 | grep -vE 'htmlFor|aria-label'` (RGAA exige `for`, l'imbrication ne suffit pas) · `<TextField` sans `label` ni `aria-label` ni `id` + `InputLabel`.
 - react-dsfr : `Input`, `Select`, `Checkbox`, `RadioButtons` gèrent l'association si `label` / `legend` est fourni : `G '<(Input|Select|SelectNext)\b' -A3 | grep -vE 'label='` · `legend` absent sur `Checkbox` / `RadioButtons` → 11.6.
 - Combobox downshift / MUI Autocomplete : `getLabelProps` posé sur un vrai `<label>` ? `renderInput` avec `label` ou `aria-labelledby` ? `placeholder` seul = pas d'étiquette.
@@ -242,7 +254,7 @@ Correction : `useId()` + `htmlFor` / `id` ; composant DSFR ; `slotProps.htmlInpu
 Détection : `G '(label|aria-label|legend)="(Saisir|Saisissez|Champ|Valeur|Texte|Entrée|Input|Field)[^"]*"'` · `aria-label` sur champ ≠ label visible. → Majeur.
 
 ### 11.3 Cohérence des étiquettes (S)
-Détection : `G 'label="[^"]*"' -oh | sort | uniq -c` puis repérer les variantes pour un même champ (« Email », « E-mail », « Votre email », « Adresse e-mail »). Variantes pour la même donnée → Mineur.
+Détection : `GO 'label="[^"]*"' | sort | uniq -c | sort -rn` puis repérer les variantes pour un même champ (« Email », « E-mail », « Votre email », « Adresse e-mail »). Variantes pour la même donnée → Mineur.
 
 ### 11.4 Étiquette accolée (S+R)
 Détection : `label` et champ séparés par d'autres éléments dans le JSX, ou disposés en grille (`Grid`, `display: grid`) où l'étiquette n'est pas adjacente visuellement. → Majeur, confirmer au runtime.
@@ -323,10 +335,10 @@ Détection : `G 'href="[^"]*\.(pdf|docx?|xlsx?|pptx?|odt|ods)"|download='`. Pré
 Détection : émojis (sonde 1.2), art ASCII, `:-)`, flèches textuelles `→ ← ↑ ↓ ✓ ✗` porteurs de sens : `G '[→←↑↓✓✔✗✘★☆]'`. Sans alternative (`aria-label`, `role="img"`, texte adjacent) → Mineur.
 
 ### 13.7 Flash (R)
-Détection : `G 'animation|@keyframes|blink|flash|strobe' -i "--include=*.css --include=*.scss"` et `G 'animation:|keyframes'` dans `sx`. Fréquence > 3 Hz sur une grande zone → Bloquant. Absent → NA.
+Détection : `G 'animation|@keyframes|blink|flash|strobe' -i --include='*.css' --include='*.scss'` et `G 'animation:|keyframes'` dans `sx`. Fréquence > 3 Hz sur une grande zone → Bloquant. Absent → NA.
 
 ### 13.8 Contenu en mouvement (S+R)
-Détection : `G 'Carousel|Slider|Swiper|autoplay|autoPlay|marquee|animation:.*infinite|setInterval' -i` · `G 'prefers-reduced-motion' "--include=*.css --include=*.scss"` (présence de la règle).
+Détection : `G 'Carousel|Slider|Swiper|autoplay|autoPlay|marquee|animation:.*infinite|setInterval' -i` · `G 'prefers-reduced-motion' --include='*.css' --include='*.scss'` (présence de la règle).
 Qualification : mouvement > 5 s sans bouton pause / stop ni respect de `prefers-reduced-motion` → Majeur. Absent → NA.
 
 ### 13.9 Orientation (S+R)

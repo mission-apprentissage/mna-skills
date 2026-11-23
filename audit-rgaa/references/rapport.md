@@ -17,7 +17,7 @@ Fichier : `rapport-rgaa-<critères>-<AAAA-MM-JJ>.md` dans le scratchpad. Le mêm
 | Critère | Verdict | Candidats | Anomalies (B/M/m) | Runtime | Audit 11/2025 → après correction | Gain |
 |---|---|---|---|---|---|---|
 | 1.1 | Non conforme | 87 | 6 (2/4/0) | 2 | NC (P23) → C si A1, A4 | +1,67 |
-| 1.2 | Conforme sur le code statique | 41 | 0 | 3 | NC (P05, P14–P17) → C | +1,67 |
+| 1.2 | Conforme sur le code statique | 44 | 0 | 3 | NC (P05, P14–P17) → C | +1,67 |
 | 1.4 | Non applicable | 0 | — | — | NA | — |
 
 Gain total si toutes les anomalies sont corrigées : +X,XX pt sur le taux global (n critères basculent). <Omettre la colonne et la ligne hors LBA.>
@@ -57,7 +57,7 @@ Preuve : `grep -rniE 'captcha|hcaptcha|recaptcha|turnstile' ui/` → 0 résultat
 
 ## Critère 1.2 — <énoncé>
 Verdict : Conforme sur le code statique
-Couverture : 312 fichiers · 41 candidats · 41 conformes · 3 à vérifier au runtime (icônes CSS de `notion.css`)
+Couverture : 312 fichiers · 44 candidats · 41 conformes · 3 à vérifier au runtime (icônes CSS de `notion.css`)
 Conformes : <une ligne>
 ```
 
@@ -65,5 +65,7 @@ Règles de rédaction :
 - Une anomalie sans `fichier:ligne`, sans pages impactées ou sans correction n'entre pas dans le rapport.
 - Regrouper les occurrences identiques d'un composant partagé sous un seul `An` : une cause, une correction.
 - Les verdicts « Conforme » portent la couverture chiffrée ; « sur le code statique » dès qu'un point runtime reste.
+- Les comptes bouclent : conformes + anomalies + à vérifier au runtime = candidats. Un écart signale des candidats non qualifiés.
+- Un « Conforme » sur zéro candidat cite la sonde et sa contre-sonde, comme un « Non applicable ».
 - Les colonnes Audit et Gain n'existent que pour La bonne alternance, sur l'échantillon du 25/11/2025 ; les chiffres viennent de `review-rgaa/references/audit-2025.md`.
 - Phrases courtes, pas de tiret cadratin, pas d'emoji, français.

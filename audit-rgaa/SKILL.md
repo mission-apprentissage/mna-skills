@@ -55,14 +55,14 @@ Ne rien supposer du repo : le skill tourne sur LBA, BAL, api-apprentissage ou un
 1. **Racine UI** : chercher `package.json` contenant `"next"` (`ui/package.json` dans les repos de la mission, sinon la racine). Noter `UI_ROOT`.
 2. **Stack** : dans ce `package.json`, relever `@codegouvfr/react-dsfr`, `@mui/material`, `@chakra-ui/react`, `tailwindcss`, `formik`, `react-hook-form`, `downshift`, `react-dropzone`, `next-plausible`. Les sondes de `references/sondes.md` ont des variantes par bibliothèque : n'appliquer que celles de la stack détectée.
 3. **Routes** : `find $UI_ROOT/app -name "page.tsx" -o -name "page.jsx"` (App Router) et `$UI_ROOT/pages/**` (Pages Router). Noter les `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx` : ce sont aussi des pages.
-4. **Composants** : tous les `*.tsx` / `*.jsx` sous `$UI_ROOT` hors `node_modules`, `.next`, `out`, `dist`, `coverage`, `e2e`, `tests`, `__tests__`, `*.test.*`, `*.stories.*`, `scripts`. Compter les fichiers : ce nombre figure dans le rapport (couverture).
+4. **Composants** : tous les `*.tsx` / `*.jsx` / `*.ts` sous `$UI_ROOT` hors `node_modules`, `.next`, `out`, `dist`, `coverage`, `e2e`, `tests`, `__tests__`, `scripts`, `*.test.*`, `*.stories.*`, `*.d.ts` (le périmètre de `G()` dans `sondes.md`). Compter les fichiers : ce nombre figure dans le rapport (couverture).
 5. **Styles** : `*.css`, `*.scss`, thème MUI (`theme/`), `sx` inline. Concernés par les thèmes 3 et 10.
 6. **Registre des titres et métadonnées** : `metadata`, `generateMetadata`, `METADATA` (LBA : `ui/utils/routes.metadata.utils.ts`).
 7. **Graphe composant → pages** : pour rattacher une anomalie aux pages qui la rendent, remonter les imports (`grep -rl "from \"@/…/Composant\""`) jusqu'aux `page.tsx` / `layout.tsx`. Un composant importé par un `layout.tsx` racine ou par le header/footer touche toutes les pages : le dire.
 
 Écrire l'inventaire dans le scratchpad (`inventaire.md` : racine, stack, nombre de pages, nombre de composants, liste des routes). Le rapport y renvoie.
 
-**Contexte LBA** : si le repo est `labonnealternance`, charger `~/.claude/skills/review-rgaa/references/audit-2025.md` : statut du critère dans l'audit du 25/11/2025, pages NC, correspondance pages ↔ routes, méthode de calcul des points. Le rapport indique alors ce que l'audit a relevé, ce qui est corrigé, ce qui reste, et le gain si le critère bascule (+1,67 pt par critère). Pour un autre repo, cette section n'existe pas : ne pas l'inventer.
+**Contexte LBA** : si le repo est `labonnealternance`, charger `~/.claude/skills/review-rgaa/references/audit-2025.md` : statut du critère dans l'audit du 25/11/2025, pages NC, correspondance pages ↔ routes, méthode de calcul des points. Le rapport indique alors ce que l'audit a relevé, ce qui est corrigé, ce qui reste, et le gain si le critère bascule (+1,67 pt par critère). Si ce fichier est absent (skill `review-rgaa` non installé), l'écrire en tête du rapport et omettre les colonnes Audit et Gain plutôt que de les estimer. Pour un autre repo, cette section n'existe pas : ne pas l'inventer.
 
 ---
 
@@ -79,16 +79,16 @@ Lancer les **sondes de détection** du critère sur tout `UI_ROOT`. Chaque occur
 ### 3.3 Qualification
 Ouvrir chaque candidat dans son contexte (10 lignes autour, le composant parent si nécessaire) et trancher selon les **règles de qualification** du critère : anomalie, conforme, ou non décidable statiquement. Une sonde qui matche un composant qui fait le travail (react-dsfr `Input` avec `label`, MUI `TextField` avec `id`) se classe conforme après lecture, pas avant.
 
-- **Plus de 40 candidats** : découper par dossier et déléguer à des sous-agents en parallèle avec la même grille de qualification (extrait de `sondes.md` collé dans le prompt) ; chacun rend un tableau `fichier:ligne | extrait | verdict | justification`. Consolider ensuite soi-même.
+- **Plus de 40 candidats** : découper par dossier et déléguer à des sous-agents en parallèle avec la même grille de qualification (extrait de `sondes.md` collé dans le prompt) ; chacun rend un tableau `fichier:ligne | extrait | verdict | justification`. Consolider ensuite soi-même : la somme des verdicts rendus (conformes + anomalies + runtime) doit retomber sur le nombre de candidats collectés, sinon requalifier les candidats manquants avant d'écrire le verdict.
 - **Composants partagés** : qualifier une seule fois, lister toutes les pages rendues.
 - **Non décidable statiquement** (contraste calculé, focus visible, ordre de tabulation, restitution d'un composant tiers) : classer « à vérifier au runtime » et compter à part. Ne jamais l'écrire « conforme ».
 
 ### 3.4 Correction
-Pour chaque anomalie : la correction en React, prête à coller, dans l'ordre composant du design system → bibliothèque UI (`slotProps`, `component=`) → HTML natif. Les patterns par stack sont dans `~/.claude/skills/review-rgaa/references/patterns-stack.md`. Quand la même anomalie se répète dans N fichiers, proposer la correction **à la source** (composant partagé, wrapper, règle de lint) plutôt que N patchs.
+Pour chaque anomalie : la correction en React, prête à coller, dans l'ordre composant du design system → bibliothèque UI (`slotProps`, `component=`) → HTML natif. Les patterns par stack sont dans `~/.claude/skills/review-rgaa/references/patterns-stack.md` ; s'il est absent, le dire dans le rapport et s'appuyer sur la documentation de la bibliothèque. Quand la même anomalie se répète dans N fichiers, proposer la correction **à la source** (composant partagé, wrapper, règle de lint) plutôt que N patchs.
 
 ### 3.5 Verdict du critère
 - **Non conforme** : au moins une anomalie confirmée.
-- **Conforme** : tous les candidats qualifiés conformes, sondes lancées sur toute la racine UI, aucun point « runtime » en attente. Préciser « sur le code statique » si des points runtime restent.
+- **Conforme** : tous les candidats qualifiés conformes, sondes lancées sur toute la racine UI, aucun point « runtime » en attente. Préciser « sur le code statique » si des points runtime restent. Avec zéro candidat, même exigence que pour le Non applicable (3.1) : sonde relancée seule, sans pipe, stderr lu, puis contre-sonde de forme différente ; les deux commandes figurent dans le rapport.
 - **Non applicable** : voir 3.1.
 - **Non vérifiable statiquement** : aucun candidat anormal mais le critère exige le rendu (3.2, 3.3, 10.4, 10.7, 10.11, 10.12, 12.8, 13.7, 13.9). Verdict réservé à la section 5.
 
@@ -114,7 +114,7 @@ Pour les critères non vérifiables statiquement, ou pour confirmer un verdict :
 1. `preview_start`, puis parcourir un **échantillon de routes** : toutes les routes statiques de l'inventaire ; pour les routes dynamiques, une instance par gabarit (prendre les URL du sitemap ou demander un identifiant). Les pages authentifiées sont marquées « non testées » sauf si un compte de test est fourni.
 2. `read_page` : arbre d'accessibilité (noms, rôles, états, titres, landmarks).
 3. `javascript_tool` : contrôles mécaniques du critère (voir `sondes.md`, colonne runtime : titres, landmarks, `id` dupliqués, références ARIA cassées, contraste calculé, `scrollWidth` à 320 px).
-4. axe-core : la CSP des projets de la mission (`script-src 'self'`) interdit tout CDN. Servir `axe.min.js` depuis `$UI_ROOT/public` le temps de la session (fichier à supprimer ensuite, jamais commité) ou script Playwright avec `@axe-core/playwright` ; `axe-core` en devDependency à proposer, jamais à installer sans accord.
+4. axe-core : la CSP des projets de la mission (`script-src 'self'`) interdit tout CDN. Passer par un script Playwright avec `@axe-core/playwright` en devDependency, à proposer, jamais à installer sans accord. Ne pas déposer `axe.min.js` dans `$UI_ROOT/public` : ce dossier est suivi par git et déployé (LBA), le fichier n'a ni provenance ni version vérifiées. Si l'utilisateur l'exige quand même : version épinglée prise dans `node_modules/axe-core`, ligne `.gitignore` posée avant la copie, fichier supprimé et `git status` propre en fin de session.
 5. Clavier : `computer` avec `action: "key"`, `text: "Tab"`, puis `screenshot`.
 
 Toute preuve runtime est citée dans le rapport avec la route testée.
@@ -162,6 +162,8 @@ Sur demande uniquement. Corriger par numéro, à la source quand c'est possible,
 
 - Une anomalie = critère + preuve (`fichier:ligne`, extrait) + pages impactées + correction. Pas de finding sans les quatre.
 - Une conformité = couverture chiffrée + méthode. « Aucune occurrence trouvée » exige deux recherches de forme différente.
+- Une sonde de détection qui ne retourne aucune ligne est une absence à prouver, pas une conformité : relancer la sonde seule, sans pipe, afficher stderr (code 2 = sonde en erreur), puis la contre-sonde de forme différente. Un verdict Conforme sur zéro candidat sans contre-sonde n'est pas recevable.
+- Les comptes bouclent : conformes + anomalies + à vérifier au runtime = candidats, pour chaque critère.
 - Distinguer toujours statique et runtime. Ce qui n'a pas été rendu n'est pas « conforme », il est « conforme sur le code statique » ou « à vérifier ».
 - Les chiffres de points ne concernent que LBA et l'échantillon du 25/11/2025 : les citer comme tels, jamais pour un autre repo.
 - Aucune mention de Claude, d'IA ou d'outil de génération dans un rapport destiné à être partagé.
